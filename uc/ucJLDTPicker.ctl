@@ -1107,10 +1107,10 @@ End Property
 
 Public Property Let AutoApply(ByVal Value As Boolean)
     m_AutoApply = Value
-    If IsChild Then
-        MsgBox "Cannot enable AutoApply if control is child", vbInformation + vbOKOnly, UserControl.Name
-        m_AutoApply = False
-    End If
+'    If IsChild Then
+'        MsgBox "Cannot enable AutoApply if control is child", vbInformation + vbOKOnly, UserControl.Name
+'        m_AutoApply = False
+'    End If
     PropertyChanged "AutoApply"
     If m_IsChild Then InitControl: Draw: Refresh
 End Property
@@ -2411,7 +2411,7 @@ Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Sing
     '---
 
     '-> Botones de accion.
-    If Not m_AutoApply Or IsChild Then
+    If Not m_AutoApply Then
         For i = 0 To UBound(udtItemsActionButton)
             With udtItemsActionButton(i)
                 If PtInRect(.RECT2, X, Y) Then
@@ -2679,7 +2679,7 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
     '---
 
     '-> Botones de accion.
-    If Not m_AutoApply Or IsChild Then
+    If Not m_AutoApply Then
         For i = 0 To UBound(udtItemsActionButton)
             With udtItemsActionButton(i)
                 If PtInRect(.RECT2, X, Y) Then
@@ -2841,13 +2841,13 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                 If Len(d_ValueStartTemp) <= 0 Then
                                     d_ValueStartTemp = .DateValue
                                     '---
-                                    If m_AutoApply Or IsChild Then
+                                    If m_AutoApply Then
                                         udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
                                     End If
                                 Else
                                     If .DateValue >= CDate(d_ValueStartTemp) Then
                                         d_ValueEndTemp = .DateValue
-                                        If m_AutoApply Or IsChild Then
+                                        If m_AutoApply Then
                                             udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
                                             Call ApplyChangeValues
                                         End If
@@ -2860,7 +2860,7 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                         Else
                             If .DateValue >= m_MinDate And .DateValue <= m_MaxDate Then
                                 d_ValueTemp = .DateValue
-                                If m_AutoApply Or IsChild Then
+                                If m_AutoApply Then
                                     udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
                                     '--
                                     Call ApplyChangeValues
@@ -2926,7 +2926,7 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
     '---
 
     '-> Botones de accion.
-    If Not m_AutoApply Or IsChild Then
+    If Not m_AutoApply Then
         For i = 0 To UBound(udtItemsActionButton)
             With udtItemsActionButton(i)
                 If PtInRect(.RECT2, X, Y) Then
@@ -2939,7 +2939,14 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                     .NumberYear = Year(d_ValueTemp)
                                     .NumberMonth = Month(d_ValueTemp)
                                     .MonthName = MonthName(Month(d_ValueTemp))
-                                    .DateInPicker = DateSerial(.NumberYear, .NumberMonth, 1)
+                                    If m_UseRangeValue Then
+                                        .DateInPicker = DateSerial(.NumberYear, .NumberMonth, 1)
+                                        m_ValueStart = d_ValueTemp: d_ValueStartTemp = d_ValueTemp: RaiseEvent ChangeStarDate(d_ValueTemp)
+                                        m_ValueEnd = d_ValueTemp: d_ValueEndTemp = d_ValueTemp: RaiseEvent ChangeEndDate(d_ValueTemp)
+                                    Else
+                                        .DateInPicker = d_ValueTemp
+                                        RaiseEvent ChangeDate(d_ValueTemp)
+                                    End If
                                 End With
                                 Call UpdateLinkedCalendar(0)
                             Case [Action Cancel]
@@ -2948,7 +2955,9 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                     Exit Sub
                                 Else
                                     ValueStart = ""
+                                    RaiseEvent ChangeStarDate("")
                                     ValueEnd = ""
+                                    RaiseEvent ChangeEndDate("")
                                 End If
                             Case [Action Apply]
                                 If ApplyChangeValues Then Exit Sub
@@ -3579,7 +3588,7 @@ Private Sub InitControl()
     'Botones de accion.
     'udtItemsActionButton(2) 'Para botones de rangos ('Hoy', 'Cancelar', 'Aplicar')
     'Definir nombres en los botones de accion:
-    If Not m_AutoApply Or IsChild Then
+    If Not m_AutoApply Then
         btnWidth = 0
         countItem = UBound(udtItemsActionButton) - IIF(IsChild, 1, 0)
         For i = 0 To countItem
@@ -3617,7 +3626,7 @@ Private Sub InitControl()
             i = 0
         End If
         c_Width = (((udtItemsPicker(i).RECT.Left + udtItemsPicker(i).RECT.Width) * IIF(m_ColsPicker, m_ColsPicker, 1)) + PaddingX + IIF(m_ShowRange And m_UseRangeValue, udtItemsRangeButton(0).RECT.Width + (PaddingX * 2), 0) + IIF(m_CallOutPosition = [Position Right] And Not m_IsChild, coWidth, 0)) * Screen.TwipsPerPixelX
-        c_Height = (((udtItemsPicker(0).RECT.Top + udtItemsPicker(0).RECT.Height) * a) + PaddingY + IIF(Not m_AutoApply Or IsChild, udtItemsActionButton(0).RECT.Height + PaddingY, 0) + IIF(m_CallOutPosition = [Position Bottom] And Not m_IsChild, coHeight, 0)) * Screen.TwipsPerPixelX
+        c_Height = (((udtItemsPicker(0).RECT.Top + udtItemsPicker(0).RECT.Height) * a) + PaddingY + IIF(Not m_AutoApply, udtItemsActionButton(0).RECT.Height + PaddingY, 0) + IIF(m_CallOutPosition = [Position Bottom] And Not m_IsChild, coHeight, 0)) * Screen.TwipsPerPixelX
         '---
         .Size c_Width, c_Height
     End With
@@ -3857,7 +3866,7 @@ Private Sub ResetControl()
         Next
     End If
     '-AutoApply
-    If Not m_AutoApply Or IsChild Then
+    If Not m_AutoApply Then
         For i = 0 To UBound(udtItemsActionButton)
             udtItemsActionButton(i).MouseState = Normal
         Next
@@ -3891,7 +3900,7 @@ Private Sub Draw()
     
     '-> Pintar ParentBackColor
     If m_IsChild Then
-        SetRect lRect, 0, 0, UserControl.ScaleWidth, UserControl.ScaleHeight
+        SetRect lRect, -1, -1, UserControl.ScaleWidth + 2, UserControl.ScaleHeight + 2
         DrawRoundRect hGraphics, lRect, Corners, m_BackColorParent
     End If
     
@@ -3904,7 +3913,7 @@ Private Sub Draw()
     End With
     '---
     SetRect lRect, 0, 0, UserControl.ScaleWidth, UserControl.ScaleHeight
-    DrawRoundRect hGraphics, lRect, Corners, m_BackColor, IIF(m_IsChild, m_BorderWidth, 0), m_BorderColor
+    DrawRoundRect hGraphics, lRect, Corners, m_BackColor, IIF(m_IsChild, IIF(m_Border, m_BorderWidth, 0), 0), m_BorderColor
 
     '-> Pintar los meses y años.
     With Corners
@@ -4041,7 +4050,7 @@ Private Sub Draw()
                         .TopLeft = m_DayCornerRadius: .TopRight = m_DayCornerRadius: .BottomLeft = m_DayCornerRadius: .BottomRight = m_DayCornerRadius
                     End With
                     '---
-                    If .MouseState = Hot Then BackColor = ShiftColor(vbWhite, m_DaySelValuesColor, 220)
+                    If .MouseState = Hot Then BackColor = ShiftColor(m_BackColor, m_DaySelValuesColor, 200)
                     If .MouseState = Normal Then BackColor = m_DayBackColor
                     '---
                     IsBold = False
@@ -4220,7 +4229,7 @@ Private Sub Draw()
     End If
 
     '-> Pintar Botones de accion.
-    If Not m_AutoApply Or IsChild Then
+    If Not m_AutoApply Then
         countItem = UBound(udtItemsActionButton) - IIF(IsChild, 1, 0)
         With Corners
             .TopLeft = m_ButtonsCornerRadius: .TopRight = m_ButtonsCornerRadius

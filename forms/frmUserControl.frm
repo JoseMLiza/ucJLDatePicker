@@ -8,7 +8,6 @@ Begin VB.Form frmUserControl
    ClientWidth     =   8880
    Icon            =   "frmUserControl.frx":0000
    LinkTopic       =   "Form1"
-   LockControls    =   -1  'True
    MaxButton       =   0   'False
    MinButton       =   0   'False
    ScaleHeight     =   4230
@@ -21,7 +20,7 @@ Begin VB.Form frmUserControl
       Index           =   6
       Left            =   120
       TabIndex        =   13
-      Top             =   3840
+      Top             =   3600
       Width           =   1575
    End
    Begin Proyecto1.ucJLDTPicker ucJLDTPicker 
@@ -118,7 +117,7 @@ Begin VB.Form frmUserControl
       Index           =   3
       Left            =   120
       TabIndex        =   12
-      Top             =   3120
+      Top             =   2880
       Width           =   1215
    End
    Begin Proyecto1.ucText ucTxtProperties 
@@ -126,7 +125,7 @@ Begin VB.Form frmUserControl
       Index           =   0
       Left            =   1320
       TabIndex        =   9
-      Top             =   1755
+      Top             =   1515
       Width           =   690
       _ExtentX        =   1217
       _ExtentY        =   609
@@ -155,7 +154,7 @@ Begin VB.Form frmUserControl
       Index           =   5
       Left            =   120
       TabIndex        =   7
-      Top             =   3600
+      Top             =   3360
       Width           =   1215
    End
    Begin VB.ComboBox Combo1 
@@ -172,7 +171,7 @@ Begin VB.Form frmUserControl
       Index           =   4
       Left            =   120
       TabIndex        =   4
-      Top             =   3360
+      Top             =   3120
       Width           =   1215
    End
    Begin Proyecto1.ucText ucTextValue 
@@ -208,7 +207,7 @@ Begin VB.Form frmUserControl
       Index           =   2
       Left            =   120
       TabIndex        =   2
-      Top             =   2880
+      Top             =   2640
       Value           =   1  'Checked
       Width           =   1215
    End
@@ -218,7 +217,7 @@ Begin VB.Form frmUserControl
       Index           =   1
       Left            =   120
       TabIndex        =   0
-      Top             =   2640
+      Top             =   2400
       Value           =   1  'Checked
       Width           =   1455
    End
@@ -227,7 +226,7 @@ Begin VB.Form frmUserControl
       Index           =   1
       Left            =   1320
       TabIndex        =   10
-      Top             =   2160
+      Top             =   1920
       Width           =   690
       _ExtentX        =   1217
       _ExtentY        =   609
@@ -309,7 +308,7 @@ Begin VB.Form frmUserControl
       Height          =   255
       Left            =   120
       TabIndex        =   11
-      Top             =   2205
+      Top             =   1965
       Width           =   1215
    End
    Begin VB.Label Label2 
@@ -326,7 +325,7 @@ Begin VB.Form frmUserControl
       Height          =   255
       Left            =   120
       TabIndex        =   8
-      Top             =   1800
+      Top             =   1560
       Width           =   1215
    End
    Begin VB.Label Label1 
