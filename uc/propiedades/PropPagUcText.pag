@@ -1,0 +1,488 @@
+VERSION 5.00
+Begin VB.PropertyPage PropPagUcText 
+   Caption         =   "Image"
+   ClientHeight    =   1935
+   ClientLeft      =   0
+   ClientTop       =   0
+   ClientWidth     =   7020
+   PaletteMode     =   0  'Halftone
+   ScaleHeight     =   1935
+   ScaleWidth      =   7020
+   Begin VB.Frame Frame1 
+      Caption         =   "Image Right"
+      Height          =   1695
+      Index           =   1
+      Left            =   5280
+      TabIndex        =   6
+      Top             =   120
+      Width           =   1575
+      Begin VB.TextBox TxtSize 
+         Alignment       =   2  'Center
+         Height          =   300
+         Index           =   1
+         Left            =   960
+         TabIndex        =   9
+         Top             =   1200
+         Width           =   500
+      End
+      Begin VB.CommandButton CmdOpen 
+         Caption         =   "Open"
+         Height          =   375
+         Index           =   1
+         Left            =   120
+         TabIndex        =   8
+         Top             =   240
+         Width           =   1335
+      End
+      Begin VB.CommandButton CmdDelete 
+         Caption         =   "Delete"
+         Height          =   375
+         Index           =   1
+         Left            =   120
+         TabIndex        =   7
+         Top             =   720
+         Width           =   1335
+      End
+      Begin VB.Label Label1 
+         Caption         =   "Image Size:"
+         Height          =   255
+         Index           =   1
+         Left            =   120
+         TabIndex        =   10
+         Top             =   1245
+         Width           =   855
+      End
+   End
+   Begin VB.Frame Frame1 
+      Caption         =   "Image Left"
+      Height          =   1695
+      Index           =   0
+      Left            =   120
+      TabIndex        =   1
+      Top             =   120
+      Width           =   1575
+      Begin VB.CommandButton CmdDelete 
+         Caption         =   "Delete"
+         Height          =   375
+         Index           =   0
+         Left            =   120
+         TabIndex        =   4
+         Top             =   720
+         Width           =   1335
+      End
+      Begin VB.CommandButton CmdOpen 
+         Caption         =   "Open"
+         Height          =   375
+         Index           =   0
+         Left            =   120
+         TabIndex        =   3
+         Top             =   240
+         Width           =   1335
+      End
+      Begin VB.TextBox TxtSize 
+         Alignment       =   2  'Center
+         Height          =   300
+         Index           =   0
+         Left            =   960
+         TabIndex        =   2
+         Top             =   1200
+         Width           =   500
+      End
+      Begin VB.Label Label1 
+         Caption         =   "Image Size:"
+         Height          =   255
+         Index           =   0
+         Left            =   120
+         TabIndex        =   5
+         Top             =   1245
+         Width           =   855
+      End
+   End
+   Begin Proyecto1.ucText ucText1 
+      Height          =   495
+      Left            =   1800
+      TabIndex        =   0
+      Top             =   120
+      Width           =   3375
+      _ExtentX        =   5953
+      _ExtentY        =   873
+      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Segoe UI"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      BackColor       =   -2147483643
+      ImgLeft         =   "PropPagUcText.pgx":0000
+      ImgRight        =   "PropPagUcText.pgx":0018
+      ImgLeftSize     =   0
+      ImgRightSize    =   0
+      RightButtonStyle=   1
+   End
+   Begin Proyecto1.ucText TxtCaption 
+      Height          =   495
+      Left            =   1800
+      TabIndex        =   11
+      Top             =   720
+      Width           =   3375
+      _ExtentX        =   5953
+      _ExtentY        =   873
+      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Segoe UI"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      BackColor       =   -2147483643
+      ImgLeft         =   "PropPagUcText.pgx":0030
+      ImgRight        =   "PropPagUcText.pgx":0048
+      ImgLeftSize     =   0
+      ImgRightSize    =   0
+      RightButtonStyle=   0
+   End
+   Begin Proyecto1.ucText TxtCuebanner 
+      Height          =   495
+      Left            =   1800
+      TabIndex        =   12
+      Top             =   1320
+      Width           =   3375
+      _ExtentX        =   5953
+      _ExtentY        =   873
+      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Segoe UI"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      BackColor       =   -2147483643
+      ImgLeft         =   "PropPagUcText.pgx":0060
+      ImgRight        =   "PropPagUcText.pgx":0078
+      ImgLeftSize     =   0
+      ImgRightSize    =   0
+      RightButtonStyle=   0
+   End
+End
+Attribute VB_Name = "PropPagUcText"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Explicit
+Private Declare Function GetOpenFileName Lib "Comdlg32" Alias "GetOpenFileNameA" (file As OPENFILENAME) As Long
+Private Type OPENFILENAME
+    lStructSize         As Long                 ' Filled with UDT size
+    hWndOwner           As Long                 ' Tied to Owner
+    hInstance           As Long                 ' Ignored (used only by templates)
+    lpstrFilter         As String               ' Tied to Filter
+    lpstrCustomFilter   As String               ' Ignored (exercise for reader)
+    nMaxCustFilter      As Long                 ' Ignored (exercise for reader)
+    nFilterIndex        As Long                 ' Tied to FilterIndex
+    lpstrFile           As String               ' Tied to FileName
+    nMaxFile            As Long                 ' Handled internally
+    lpstrFileTitle      As String               ' Tied to FileTitle
+    nMaxFileTitle       As Long                 ' Handled internally
+    lpstrInitialDir     As String               ' Tied to InitDir
+    lpstrTitle          As String               ' Tied to DlgTitle
+    Flags               As Long                 ' Tied to Flags
+    nFileOffset         As Integer              ' Ignored (exercise for reader)
+    nFileExtension      As Integer              ' Ignored (exercise for reader)
+    lpstrDefExt         As String               ' Tied to DefaultExt
+    lCustData           As Long                 ' Ignored (needed for hooks)
+    lpfnHook            As Long                 ' Ignored (good luck with hooks)
+    lpTemplateName      As Long                 ' Ignored (good luck with templates)
+End Type
+
+Private Const FILTER_PICTURES As String = "Pictures|*.bmp;*.gif;*.jpg;*.jpeg;*.png;*.dib;*.rle;*.jpe;*.jfif;*.emf;*.wmf;*.tif;*.tiff;*.ico;*.cur"
+
+Private Declare Function GdipLoadImageFromFile Lib "gdiplus" (ByVal FileName As Long, ByRef Image As Long) As Long
+Private Declare Function GdipLoadImageFromStream Lib "gdiplus" (ByVal Stream As Any, ByRef Image As Long) As Long
+Private Declare Function GdipGetImageDimension Lib "gdiplus" (ByVal Image As Long, ByRef Width As Single, ByRef Height As Single) As Long
+Private Declare Function GdipDisposeImage Lib "gdiplus" (ByVal Image As Long) As Long
+Private Declare Function GdipDrawImageRectRectI Lib "gdiplus" (ByVal hGraphics As Long, ByVal hImage As Long, ByVal DstX As Long, ByVal DstY As Long, ByVal DstWidth As Long, ByVal DstHeight As Long, ByVal SrcX As Long, ByVal SrcY As Long, ByVal SrcWidth As Long, ByVal SrcHeight As Long, ByVal srcUnit As Long, Optional ByVal imageAttributes As Long = 0, Optional ByVal Callback As Long = 0, Optional ByVal callbackData As Long = 0) As Long
+Private Declare Function GdipSetInterpolationMode Lib "gdiplus" (ByVal graphics As Long, ByVal InterpolationMode As Long) As Long
+Private Declare Function GdipSetPixelOffsetMode Lib "gdiplus" (ByVal graphics As Long, ByVal PixelOffSetMode As Long) As Long
+Private Declare Function GdipDeleteGraphics Lib "gdiplus" (ByVal hGraphics As Long) As Long
+
+Private Declare Function GdipCreateBitmapFromScan0 Lib "gdiplus" (ByVal Width As Long, ByVal Height As Long, ByVal stride As Long, ByVal Format As Long, ByRef Scan0 As Any, ByRef BITMAP As Long) As Long
+Private Declare Function GdipGetImageGraphicsContext Lib "gdiplus" (ByVal Image As Long, hGraphics As Long) As Long
+Private Declare Function GdipSaveImageToStream Lib "gdiplus" (ByVal Image As Long, ByVal Stream As IUnknown, clsidEncoder As Any, encoderParams As Any) As Long
+
+Private Declare Function GlobalAlloc Lib "kernel32" (ByVal uFlags As Long, ByVal dwBytes As Long) As Long
+Private Declare Function GlobalLock Lib "kernel32" (ByVal hMem As Long) As Long
+Private Declare Function GlobalUnlock Lib "kernel32" (ByVal hMem As Long) As Long
+Private Declare Function GlobalSize Lib "kernel32" (ByVal hMem As Long) As Long
+Private Declare Sub CopyMemory Lib "Kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
+
+Private Declare Function CreateStreamOnHGlobal Lib "ole32" (ByVal hGlobal As Any, ByVal fDeleteOnRelease As Long, ppstm As Any) As Long
+Private Declare Function CLSIDFromString Lib "ole32" (ByVal lpszProgID As Long, pCLSID As Any) As Long
+Private Declare Function GetHGlobalFromStream Lib "ole32" (ByVal ppstm As Long, hGlobal As Long) As Long
+
+Private Type GUID
+  Data1   As Long
+  Data2   As Integer
+  Data3   As Integer
+  Data4(7) As Byte
+End Type
+
+
+Private bIsLoad As Boolean
+Private m_ObjTxt As ucText
+
+
+Private Function ReadFile(sFileName As String) As Byte()
+    Dim FF As Integer
+    FF = FreeFile
+    Open sFileName For Binary As #FF
+        ReDim ReadFile(LOF(FF) - 1)
+        Get #FF, , ReadFile
+    Close #FF
+End Function
+
+Private Sub CmdDelete_Click(Index As Integer)
+    If Index = 0 Then
+        ucText1.DeleteImgLeft
+    Else
+        ucText1.DeleteImgRight
+    End If
+    CmdDelete(Index).Enabled = False
+    Changed = True
+End Sub
+
+Private Sub CmdOpen_Click(Index As Integer)
+    Dim OFName  As OPENFILENAME
+    Dim sFile   As String
+    Dim hImage As Long
+    Dim ImgW As Single, ImgH As Single
+    Dim NewSize As Long
+    
+    Dim Factor As Double
+    Dim ReqWidth As Long, ReqHeight As Long
+    Dim Grph As Long, hBmp As Long
+    Dim ImgScale As Double
+    
+    With OFName
+        .lStructSize = Len(OFName)
+        .hWndOwner = PropertyPage.hWnd
+        .hInstance = App.hInstance
+        .lpstrFilter = Replace(FILTER_PICTURES, "|", Chr(0)) + Chr$(0) '"Imagenes" + Chr$(0) + "*.Ico" + Chr$(0)
+        .lpstrFile = String(254, Chr(0))
+        .nMaxFile = 255
+
+        If GetOpenFileName(OFName) Then
+            sFile = Left(OFName.lpstrFile, InStr(OFName.lpstrFile, Chr(0)) - 1)
+            If GdipLoadImageFromFile(StrPtr(sFile), hImage) = 0& Then
+                GdipGetImageDimension hImage, ImgW, ImgH
+                If MsgBox("the current size of the image is " & ImgW & "x" & ImgH & " do you want to change this size?. Very large images will occupy more memory and will slow down the drawing, if you work with dpi scaling, it is advisable to use at least triple the size that it will occupy within the control.", vbYesNo) = vbYes Then
+                    
+                    NewSize = Val(InputBox("Enter the new size box", , Val(TxtSize(Index))))
+                    If NewSize > 0 Then
+                        ImgScale = IIF(ImgH >= ImgW, ImgH, ImgW)
+                        Factor = NewSize / ImgScale
+                        ReqWidth = ImgW * Factor
+                        ReqHeight = ImgH * Factor
+                   
+                   
+                        If GdipCreateBitmapFromScan0(ReqWidth, ReqHeight, 0&, &HE200B, ByVal 0&, hBmp) = 0 Then
+                            If GdipGetImageGraphicsContext(hBmp, Grph) = 0 Then
+                            
+                                Call GdipSetInterpolationMode(Grph, 7&)  '//InterpolationModeHighQualityBicubic
+                                Call GdipSetPixelOffsetMode(Grph, 4&)
+                                
+                                Call GdipDrawImageRectRectI(Grph, hImage, 0, 0, ReqWidth, ReqHeight, 0, 0, ImgW, ImgH, &H2)
+                                GdipDeleteGraphics Grph
+                                If Index = 0 Then
+                                    ucText1.LoadImgLeft BitmapToArray(hBmp)
+                                Else
+                                    ucText1.LoadImgRight BitmapToArray(hBmp)
+                                    ucText1.RightButtonStyle = RS_Icon
+                                End If
+                                Changed = True
+                                Call GdipDisposeImage(hBmp)
+                            End If
+                        End If
+                    End If
+                    
+                Else
+                    If Index = 0 Then
+                        ucText1.LoadImgLeft ReadFile(sFile)
+                    Else
+                        ucText1.LoadImgRight ReadFile(sFile)
+                        ucText1.RightButtonStyle = RS_Icon
+                    End If
+                    Changed = True
+                End If
+                Call GdipDisposeImage(hImage)
+            End If
+        End If
+    End With
+
+End Sub
+
+Private Sub PropertyPage_ApplyChanges()
+    On Error Resume Next
+
+    If IsError(UBound(ucText1.imgLeft)) Then
+        m_ObjTxt.DeleteImgLeft
+    Else
+        m_ObjTxt.LoadImgLeft ucText1.imgLeft
+    End If
+    
+    If IsError(UBound(ucText1.ImgRight)) Then
+        m_ObjTxt.DeleteImgRight
+    Else
+        m_ObjTxt.LoadImgRight ucText1.ImgRight
+        m_ObjTxt.RightButtonStyle = RS_Icon
+    End If
+    
+    m_ObjTxt.ImgLeftSize = ucText1.ImgLeftSize
+    m_ObjTxt.ImgRightSize = ucText1.ImgRightSize
+    m_ObjTxt.Text = ucText1.Text
+    m_ObjTxt.Caption = TxtCaption.Text
+    m_ObjTxt.CueBanner = TxtCuebanner.Text
+End Sub
+
+Private Sub PropertyPage_Initialize()
+    'ucText1.RightButtonStyle = RS_Icon
+    ucText1.SetMinSize TxtCaption.Width / Screen.TwipsPerPixelX, TxtCaption.Height / Screen.TwipsPerPixelY
+End Sub
+
+Private Sub PropertyPage_Paint()
+    ucText1.Refresh
+    TxtCaption.Refresh
+    TxtCuebanner.Refresh
+End Sub
+
+Private Sub PropertyPage_SelectionChanged()
+    Set m_ObjTxt = SelectedControls(0)
+    bIsLoad = True
+    With ucText1
+    
+        .InputType = m_ObjTxt.InputType
+        .ShortDateFormat = m_ObjTxt.ShortDateFormat
+        .LoadImgLeft m_ObjTxt.imgLeft
+        .LoadImgRight m_ObjTxt.ImgRight
+        .ImgLeftSize = m_ObjTxt.ImgLeftSize
+        .ImgRightSize = m_ObjTxt.ImgRightSize
+        .RightButtonStyle = RS_Resizable
+        .Text = m_ObjTxt.Text
+        TxtSize(0).Text = .ImgLeftSize
+        TxtSize(1).Text = .ImgRightSize
+    End With
+    TxtCaption.Text = m_ObjTxt.Caption
+    TxtCuebanner.Text = m_ObjTxt.CueBanner
+    bIsLoad = False
+End Sub
+
+Private Sub TxtSize_Change(Index As Integer)
+    If Val(TxtSize(Index).Text) > 0 Then
+        If Index = 0 Then ucText1.ImgLeftSize = Val(TxtSize(Index).Text)
+        If Index = 1 Then ucText1.ImgRightSize = Val(TxtSize(Index).Text)
+    End If
+End Sub
+
+Private Sub TxtSize_KeyPress(Index As Integer, KeyAscii As Integer)
+    Changed = True
+End Sub
+
+Private Sub ucText1_Change()
+    If bIsLoad = False Then
+        Changed = True
+    End If
+End Sub
+
+Private Sub TxtCaption_Change()
+    If bIsLoad = False Then
+        Changed = True
+    End If
+End Sub
+
+Private Sub TxtCuebanner_Change()
+    If bIsLoad = False Then
+        Changed = True
+    End If
+End Sub
+
+
+Private Function BitmapToArray(lBitmap As Long) As Byte()
+Dim oStream As IUnknown
+Dim eGUID   As GUID
+
+    Set oStream = pvStreamFromArray(0&, 0&)
+    If Not oStream Is Nothing Then
+        CLSIDFromString StrPtr("{557CF406-1A04-11D3-9A73-0000F81EF32E}"), eGUID
+        If GdipSaveImageToStream(lBitmap, oStream, eGUID, ByVal 0&) = 0& Then
+            Call pvStreamToArray(ObjPtr(oStream), BitmapToArray)
+        End If
+    End If
+End Function
+
+'Private Function LoadPictureFromStream(bvData() As Byte) As Long
+'    On Error GoTo Err
+'    Dim IStream   As IUnknown
+'    Set IStream = pvStreamFromArray(VarPtr(bvData(0)), UBound(bvData) + 1&)
+'    If Not IStream Is Nothing Then
+'        GdipLoadImageFromStream IStream, LoadPictureFromStream
+'    End If
+'    Set IStream = Nothing
+'Err:
+'End Function
+
+Private Function pvStreamFromArray(ArrayPtr As Long, Length As Long) As stdole.IUnknown
+On Error GoTo e
+Dim o_hMem As Long
+Dim o_lpMem  As Long
+     
+    If ArrayPtr = 0& Then
+        CreateStreamOnHGlobal 0&, 1&, pvStreamFromArray
+    ElseIf Length <> 0& Then
+        o_hMem = GlobalAlloc(&H2&, Length)
+        If o_hMem <> 0 Then
+            o_lpMem = GlobalLock(o_hMem)
+            If o_lpMem <> 0 Then
+                CopyMemory ByVal o_lpMem, ByVal ArrayPtr, Length
+                Call GlobalUnlock(o_hMem)
+                Call CreateStreamOnHGlobal(o_hMem, 1&, pvStreamFromArray)
+            End If
+        End If
+    End If
+    
+e:
+End Function
+
+Private Function pvStreamToArray(hStream As Long, arrayBytes() As Byte) As Boolean
+Dim o_hMem        As Long
+Dim o_lpMem       As Long
+Dim o_lByteCount  As Long
+    
+    If hStream Then
+        If GetHGlobalFromStream(ByVal hStream, o_hMem) = 0 Then
+            o_lByteCount = GlobalSize(o_hMem)
+            If o_lByteCount > 0 Then
+                o_lpMem = GlobalLock(o_hMem)
+                If o_lpMem <> 0 Then
+                    ReDim arrayBytes(0 To o_lByteCount - 1)
+                    CopyMemory arrayBytes(0), ByVal o_lpMem, o_lByteCount
+                    GlobalUnlock o_hMem
+                    pvStreamToArray = True
+                End If
+            End If
+        End If
+        
+    End If
+End Function
+
+
+Private Sub ucText1_Resize()
+    Frame1(1).Left = ucText1.Left + ucText1.Width + 50
+    TxtCaption.Top = ucText1.Top + ucText1.Height + 50
+    TxtCuebanner.Top = TxtCaption.Top + TxtCaption.Height + 50
+End Sub
