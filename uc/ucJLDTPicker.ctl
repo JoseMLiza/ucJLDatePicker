@@ -3347,6 +3347,9 @@ Public Sub Refresh()
 End Sub
 Public Sub ShowCalendar(Left As Long, Top As Long)
     If Not c_Show Then
+        Extender.Visible = False
+        Extender.Visible = True
+        '---
         c_PhWnd = UserControl.ContainerHwnd
         '---
         SetParent UserControl.hWnd, 0

@@ -2,16 +2,16 @@ VERSION 5.00
 Begin VB.Form frmUserControl 
    BorderStyle     =   4  'Fixed ToolWindow
    Caption         =   "ucJLPicker"
-   ClientHeight    =   4230
+   ClientHeight    =   4215
    ClientLeft      =   45
    ClientTop       =   390
-   ClientWidth     =   8880
+   ClientWidth     =   9105
    Icon            =   "frmUserControl.frx":0000
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   ScaleHeight     =   4230
-   ScaleWidth      =   8880
+   ScaleHeight     =   4215
+   ScaleWidth      =   9105
    ShowInTaskbar   =   0   'False
    StartUpPosition =   2  'CenterScreen
    Begin VB.CheckBox chkProperties 
@@ -25,7 +25,7 @@ Begin VB.Form frmUserControl
    End
    Begin Proyecto1.ucJLDTPicker ucJLDTPicker 
       Height          =   3960
-      Left            =   2160
+      Left            =   2400
       TabIndex        =   1
       Top             =   120
       Width           =   6540
@@ -123,11 +123,11 @@ Begin VB.Form frmUserControl
    Begin Proyecto1.ucText ucTxtProperties 
       Height          =   345
       Index           =   0
-      Left            =   1320
+      Left            =   1440
       TabIndex        =   9
       Top             =   1515
-      Width           =   690
-      _ExtentX        =   1217
+      Width           =   780
+      _ExtentX        =   1376
       _ExtentY        =   609
       BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
          Name            =   "MS Sans Serif"
@@ -163,7 +163,7 @@ Begin VB.Form frmUserControl
       Style           =   2  'Dropdown List
       TabIndex        =   5
       Top             =   1080
-      Width           =   1935
+      Width           =   2115
    End
    Begin VB.CheckBox chkProperties 
       Caption         =   "RightToLeft"
@@ -180,8 +180,8 @@ Begin VB.Form frmUserControl
       Left            =   840
       TabIndex        =   3
       Top             =   75
-      Width           =   1155
-      _ExtentX        =   2037
+      Width           =   1425
+      _ExtentX        =   2514
       _ExtentY        =   556
       BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
          Name            =   "MS Sans Serif"
@@ -198,7 +198,7 @@ Begin VB.Form frmUserControl
       Alignment       =   2
       ImgLeft         =   "frmUserControl.frx":42D0
       ImgRight        =   "frmUserControl.frx":42E8
-      RightButtonStyle=   0
+      RightButtonStyle=   2
       ShortDateFormat =   "DD/MM/YYYY"
    End
    Begin VB.CheckBox chkProperties 
@@ -224,11 +224,11 @@ Begin VB.Form frmUserControl
    Begin Proyecto1.ucText ucTxtProperties 
       Height          =   345
       Index           =   1
-      Left            =   1320
+      Left            =   1440
       TabIndex        =   10
       Top             =   1920
-      Width           =   690
-      _ExtentX        =   1217
+      Width           =   780
+      _ExtentX        =   1376
       _ExtentY        =   609
       BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
          Name            =   "MS Sans Serif"
@@ -255,8 +255,8 @@ Begin VB.Form frmUserControl
       Left            =   840
       TabIndex        =   16
       Top             =   435
-      Width           =   1155
-      _ExtentX        =   2037
+      Width           =   1410
+      _ExtentX        =   2487
       _ExtentY        =   556
       BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
          Name            =   "MS Sans Serif"
@@ -273,8 +273,94 @@ Begin VB.Form frmUserControl
       Alignment       =   2
       ImgLeft         =   "frmUserControl.frx":46D8
       ImgRight        =   "frmUserControl.frx":46F0
-      RightButtonStyle=   0
+      RightButtonStyle=   2
       ShortDateFormat =   "DD/MM/YYYY"
+   End
+   Begin Proyecto1.ucJLDTPicker ucJLDTPicker1 
+      Height          =   480
+      Left            =   1680
+      TabIndex        =   17
+      Top             =   2880
+      Visible         =   0   'False
+      Width           =   480
+      _ExtentX        =   847
+      _ExtentY        =   847
+      CornerTopLeft   =   5
+      CornerTopRight  =   5
+      CornerBottomLeft=   5
+      CornerBottomRight=   5
+      PaddingX        =   10
+      PaddingY        =   10
+      Shadow          =   -1  'True
+      ShadowSize      =   2
+      ShadowOpacity   =   10
+      SpaceGrid       =   1
+      BackColorParent =   -2147483633
+      ColsPicker      =   1
+      NumberPickers   =   1
+      LinkedCalendars =   0   'False
+      Value           =   44562
+      FirstDayOfWeek  =   2
+      ButtonNavCornerRadius=   12
+      BeginProperty ButtonNavIcoFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "MS Sans Serif"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      BeginProperty ButtonsFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Segoe UI"
+         Size            =   11.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      MonthYearBorderWidth=   1
+      MonthYearCornerRadius=   5
+      BeginProperty MonthYearFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Segoe UI"
+         Size            =   11.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      WeekBorderColor =   0
+      BeginProperty WeekFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Segoe UI"
+         Size            =   9.75
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      WeekForeColor   =   8421504
+      DayBorderColor  =   0
+      DayCornerRadius =   5
+      BeginProperty DayFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Segoe UI"
+         Size            =   9.75
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      DayFreeArray    =   ""
+      DayNowShow      =   -1  'True
+      DayNowBorderWidth=   1
+      DayNowBorderColor=   11562240
+      DaySaturdayForeColor=   0
+      DaySundayForeColor=   192
+      CallOutAlign    =   3
+      CallOutCustomPosPercent=   10
    End
    Begin VB.Label Label4 
       Caption         =   "MaxDate:"
@@ -295,6 +381,7 @@ Begin VB.Form frmUserControl
       Width           =   735
    End
    Begin VB.Label Label3 
+      Alignment       =   1  'Right Justify
       Caption         =   "Calendarios:"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
@@ -312,6 +399,7 @@ Begin VB.Form frmUserControl
       Width           =   1215
    End
    Begin VB.Label Label2 
+      Alignment       =   1  'Right Justify
       Caption         =   "Columnas:"
       BeginProperty Font 
          Name            =   "MS Sans Serif"
@@ -360,6 +448,7 @@ Private Type RECT
     Right As Long
     Bottom As Long
 End Type
+Dim iText As Integer
 
 Private Sub chkProperties_Click(Index As Integer)
     With ucJLDTPicker
@@ -410,10 +499,6 @@ Private Sub ucJLDTPicker_ButtonRangeClick(ByVal Index As Variant, Caption As Str
     MsgBox "Button Index(" & Index & "): " & Caption
 End Sub
 
-Private Sub ucJLDTPicker_ChangeDate(ByVal Value As Date)
-    'ucText1.Text = Value
-End Sub
-
 Private Sub ucJLDTPicker_ChangeMaxDate()
     ucTextValue(1).Text = ucJLDTPicker.MaxDate
 End Sub
@@ -446,6 +531,20 @@ End Sub
 Private Sub ucJLDTPicker_Resize()
     Me.Width = ucJLDTPicker.Left + ucJLDTPicker.Width + 420
     Me.Height = ucJLDTPicker.Top + ucJLDTPicker.Height + 735
+End Sub
+
+Private Sub ucJLDTPicker1_ChangeDate(ByVal Value As Date)
+    ucTextValue(iText).Text = Value
+End Sub
+
+Private Sub ucTextValue_ImgRightMouseUp(Index As Integer, Button As Variant, Shift As Integer, X As Single, Y As Single)
+    Dim RECT As RECT
+    If Not ucJLDTPicker1.IsChild Then
+        GetWindowRect ucTextValue(Index).hWnd, RECT
+        ucJLDTPicker1.ShowCalendar RECT.Left, RECT.Bottom
+        ucJLDTPicker1.Value = CDate(ucTextValue(Index).Text)
+        iText = Index
+    End If
 End Sub
 
 Private Sub ucTextValue_Validate(Index As Integer, Cancel As Boolean)

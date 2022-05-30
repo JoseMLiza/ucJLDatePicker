@@ -1,5 +1,5 @@
 ucJLDTPicker = 0, 466, 980, 932, C, 0, 0, 980, 560, C
-frmUserControl = 0, 0, 734, 936, C, 734, 0, 1576, 936, C
+frmUserControl = 0, 0, 734, 936, Z, 734, 0, 1576, 936, C
 clsShadow = 0, 0, 1047, 466, C
 clsSubClass = 156, 156, 1338, 780, C
 ucText = 130, 130, 1393, 754, C, 26, 26, 353, 586, C
