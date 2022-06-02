@@ -265,7 +265,7 @@ End Type
 '--> Items de los días del calendario.
 Private Type udtItemDayCalendar
     RECT                                As RECTL    'RECT Info.
-    RECT2                               As RECT    'REC Info.
+    RECT2                               As RECT     'REC Info.
     Caption                             As String   'Texto
     DateValue                           As String   'Fecha de dia
     DatePartDay                         As Integer  'Numero del día
@@ -285,6 +285,17 @@ Private Type udtItemDayCalendar
     MouseState                          As enmMouseState
 End Type
 
+'--> Items de las horas, minutos y segundos del timePicker.
+Private Type udtItemHourMinSecDay
+    RECT                                As RECTL
+    RECT2                               As RECT
+    Caption                             As String
+    Value                               As Integer
+    IsCurrentPart                       As Boolean
+    IndexCalendar                       As Integer
+    MouseState                          As enmMouseState
+End Type
+
 '--> Items de los botones de accion "< >"
 Private Type udtItemCalendarButton
     RECT                                As RECTL    'RECT Info.
@@ -300,21 +311,12 @@ End Type
 '--> Enumaradores:
 '---> Privados:
 Private Enum enmViewItemNavigator
+    ViewItemNavigatorSeconds
+    ViewItemNavigatorMinutes
+    ViewItemNavigatorHour
     ViewItemNavigatorDays
     ViewItemNavigatorMonths
     ViewItemNavigatorYears
-End Enum
-
-Private Enum enmStringAlign
-    StringAlignLeftTop
-    StringAlignLeftMiddle
-    StringAlignLeftBottom
-    StringAlignCenterTop
-    StringAlignCenterMiddle
-    StringAlignCenterBottom
-    StringAlignRightTop
-    StringAlignRightMiddle
-    StringAlignRightBottom
 End Enum
 
 Private Enum enmHotkeyPrefix
@@ -642,8 +644,9 @@ Private m_Enter                         As Boolean
 '--
 Private m_ColsPicker                    As Integer
 Private m_NumberPickers                 As Integer
-'Private m_ShowTimePicker                As Boolean 'Para trabajar el timepicker (siempre dropdown)
-'Private m_UseTimePicker24Hrs            as Boolean 'Para formato de 24 horas en timepicker (siempre dropdown)
+'Private m_ShowTimePicker                As Boolean 'Para trabajar el timepicker.
+'Private m_UseTimePicker24Hrs            As Boolean 'Para formato de 24 horas en timepicker.
+'Private m_TimerWithSecond               As Boolean 'Para usar el timer con segundos.
 Private m_MaxRangeDays                  As Integer 'Para limitar el maximo de días en el selectionrange.
 'Private m_AlwaysShowCalendars           As Boolean
 Private m_LinkedCalendars               As Boolean
@@ -1175,27 +1178,31 @@ Public Property Let NumberPickers(ByVal Value As Integer)
     If m_IsChild Then Draw: Refresh
 End Property
 
-'m_ShowTimePicker                As Boolean 'Para trabajar el timepicker (siempre dropdown)
+''m_ShowTimePicker                As Boolean 'Para trabajar el timepicker
 'Public Property Get ShowTimePicker() As Boolean
 '    ShowTimePicker = m_ShowTimePicker
 'End Property
-'Public Property Let ShowTimePicker(ByVal value As Boolean)
-'    m_ShowTimePicker = value
+'Public Property Let ShowTimePicker(ByVal Value As Boolean)
+'    m_ShowTimePicker = Value
 '    PropertyChanged "ShowTimePicker"
-'    'Call CreateShadow
-'    Draw
-'    Refresh
 'End Property
-
-'m_UseTimePicker24Hrs            as Boolean 'Para formato de 24 horas en timepicker (siempre dropdown)
+'
+''m_UseTimePicker24Hrs            As Boolean 'Para formato de 24 horas en timepicker
 'Public Property Get UseTimePicker24Hrs() As Boolean
 '    UseTimePicker24Hrs = m_UseTimePicker24Hrs
 'End Property
-'Public Property Let UseTimePicker24Hrs(ByVal value As Boolean)
-'    m_UseTimePicker24Hrs = value
+'Public Property Let UseTimePicker24Hrs(ByVal Value As Boolean)
+'    m_UseTimePicker24Hrs = Value
 '    PropertyChanged "UseTimePicker24Hrs"
-'    Draw
-'    Refresh
+'End Property
+'
+''m_TimerWithSecond               As Boolean
+'Public Property Get TimerWithSecond() As Boolean
+'    TimerWithSecond = m_TimerWithSecond
+'End Property
+'Public Property Let TimerWithSecond(ByVal Value As Boolean)
+'    m_TimerWithSecond = Value
+'    PropertyChanged "TimerWithSecond"
 'End Property
 
 'm_MaxRangeDays                  As Integer 'Para limitar el maximo de días en el selectionrange.
@@ -2230,17 +2237,21 @@ Private Sub UserControl_InitProperties()
     '--
     m_SinglePicker = False
     m_UseRangeValue = False
-    m_ShowRange = False
+    m_ShowRange = False                             'Para mostrar los rangos predefinidos por el usuario(Today, Yesterday, Last 7 days, Last 30 days, This Month, Last Month, Custom Range)
     m_RightToLeft = False
     m_AutoApply = True
     m_IsChild = False
     
     m_BackColorParent = Ambient.BackColor
-    'm_ShowPredefinedRange = False           'Para trabajar los rangos predefinidos (Today, Yesterday, Last 7 days, Last 30 days, This Month, Last Month, Custom Range)
     m_ColsPicker = 0
     m_NumberPickers = IIF(Not m_SinglePicker, 2, 1)
-    'm_ShowTimePicker = False                'Para trabajar el timepicker (siempre dropdown)
-    'm_UseTimePicker24Hrs =false             'Para formato de 24 horas en timepicker (siempre dropdown)
+    
+    'TimerPicker
+    'm_ShowTimePicker = False                        'Para trabajar el timepicker
+    'm_UseTimePicker24Hrs = False                    'Para formato de 24 horas en timepicker
+    'm_TimerWithSecond = False
+    'TimerPicker
+    
     m_MaxRangeDays = 0
     
     'm_AlwaysShowCalendars = True
@@ -2335,6 +2346,7 @@ End Sub
 
 Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
     Dim i, a As Integer
+    Dim bTemp As Boolean
     '-> Botones del o los calendario(s)
     For i = 0 To UBound(udtItemsNavButton)
         With udtItemsNavButton(i)
@@ -2387,8 +2399,15 @@ Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Sing
         With udtItemsMonthYear(i)
             If udtItemsPicker(.IndexCalendar).ViewNavigator <> ViewItemNavigatorDays Then
                 If PtInRect(.RECT2, X, Y) Then
-                    .MouseState = Pressed
-                    Call Draw ': Refresh
+                    If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
+                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
+                    Else
+                        bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                    End If
+                    If Not bTemp Then
+                        .MouseState = Pressed
+                        Call Draw ': Refresh
+                    End If
                 End If
             End If
         End With
@@ -2563,8 +2582,10 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
                                             ShowHandPointer True
                                             '--
                                             If IsDate(d_ValueStartTemp) Then
-                                                If ((CDate(d_ValueStartTemp) <= .DateValue) And d_ValueEndTemp = "") Then
-                                                    c_IndexSelMove = i
+                                                If (m_MaxRangeDays And DateDiff("d", d_ValueStartTemp, .DateValue, m_FirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
+                                                    If ((CDate(d_ValueStartTemp) <= .DateValue) And d_ValueEndTemp = "") Then
+                                                        c_IndexSelMove = i
+                                                    End If
                                                 End If
                                             End If
                                             tmrMouseEvent.Interval = 2
@@ -2630,6 +2651,7 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
                                             Exit Sub
                                         End If
                                     Else
+                                        ShowHandPointer False
                                         Exit Sub
                                     End If
                                 Else
@@ -2708,6 +2730,7 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
     Dim dDate As Date
     Dim pi_Temp As Integer
     Dim J As Integer
+    Dim bTemp As Boolean
     '-> Botones de navegacion del calendario(s)
     For i = 0 To UBound(udtItemsNavButton)
         With udtItemsNavButton(i)
@@ -2846,10 +2869,12 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                     End If
                                 Else
                                     If .DateValue >= CDate(d_ValueStartTemp) Then
-                                        d_ValueEndTemp = .DateValue
-                                        If m_AutoApply Then
-                                            udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
-                                            Call ApplyChangeValues
+                                        If (m_MaxRangeDays And DateDiff("d", d_ValueStartTemp, .DateValue, m_FirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
+                                            d_ValueEndTemp = .DateValue
+                                            If m_AutoApply Then
+                                                udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
+                                                Call ApplyChangeValues
+                                            End If
                                         End If
                                     End If
                                 End If
@@ -2882,26 +2907,33 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
         With udtItemsMonthYear(i)
             If udtItemsPicker(.IndexCalendar).ViewNavigator <> ViewItemNavigatorDays Then
                 If PtInRect(.RECT2, X, Y) Then
-                    If .MouseState = Pressed Then
-                        .MouseState = Hot
-                        '---
-                        Select Case udtItemsPicker(.IndexCalendar).ViewNavigator
-                            Case ViewItemNavigatorMonths
-                                If (DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) >= m_MinDate) And (DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) <= m_MaxDate) Then
-                                    udtItemsPicker(.IndexCalendar).NumberMonth = .ValueItem
-                                    udtItemsPicker(.IndexCalendar).MonthName = MonthName(.ValueItem)
-                                    udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1)
-                                    udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorDays
-                                    If m_LinkedCalendars Then UpdateLinkedCalendar (.IndexCalendar): b_ShowFastNavigator = False
-                                End If
-                            Case ViewItemNavigatorYears
-                                If .ValueItem >= Year(m_MinDate) And .ValueItem <= Year(m_MaxDate) Then
-                                    udtItemsPicker(.IndexCalendar).NumberYear = .ValueItem
-                                    udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths
-                                End If
-                        End Select
-                        Call ChangeViewPicker
-                        Call Draw ': Refresh
+                    If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
+                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
+                    Else
+                        bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                    End If
+                    If Not bTemp Then
+                        If .MouseState = Pressed Then
+                            .MouseState = Hot
+                            '---
+                            Select Case udtItemsPicker(.IndexCalendar).ViewNavigator
+                                Case ViewItemNavigatorMonths
+                                    If (DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) >= m_MinDate) And (DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) <= m_MaxDate) Then
+                                        udtItemsPicker(.IndexCalendar).NumberMonth = .ValueItem
+                                        udtItemsPicker(.IndexCalendar).MonthName = MonthName(.ValueItem)
+                                        udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1)
+                                        udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorDays
+                                        If m_LinkedCalendars Then UpdateLinkedCalendar (.IndexCalendar): b_ShowFastNavigator = False
+                                    End If
+                                Case ViewItemNavigatorYears
+                                    If .ValueItem >= Year(m_MinDate) And .ValueItem <= Year(m_MaxDate) Then
+                                        udtItemsPicker(.IndexCalendar).NumberYear = .ValueItem
+                                        udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths
+                                    End If
+                            End Select
+                            Call ChangeViewPicker
+                            Call Draw ': Refresh
+                        End If
                     End If
                 End If
             End If
@@ -3014,8 +3046,9 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         
         m_ColsPicker = .ReadProperty("ColsPicker", 0)
         m_NumberPickers = .ReadProperty("NumberPickers", IIF(Not m_SinglePicker, 2, 1))
-        'm_ShowTimePicker = .ReadProperty("ShowTimePicker", False)                      'Para trabajar el timepicker (siempre dropdown)
-        'm_UseTimePicker24Hrs .ReadProperty("UseTimePicker24Hrs", False)                'Para formato de 24 horas en timepicker (siempre dropdown)
+        'm_ShowTimePicker = .ReadProperty("ShowTimePicker", False)                       'Para trabajar el timepicker
+        'm_UseTimePicker24Hrs = .ReadProperty("UseTimePicker24Hrs", False)               'Para formato de 24 horas en timepicker
+        'm_TimerWithSecond = .ReadProperty("TimerWithSecond", False)                     'Para usar el timer hasta los segundos.
         m_MaxRangeDays = .ReadProperty("MaxRangeDays", 0)
 
         'm_AlwaysShowCalendars = .ReadProperty("AlwaysShowCalendars", True)
@@ -3228,8 +3261,9 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         
         Call .WriteProperty("ColsPicker", m_ColsPicker, 0)
         Call .WriteProperty("NumberPickers", m_NumberPickers, IIF(Not m_SinglePicker, 2, 1))
-        'Call .WriteProperty("ShowTimePicker", m_ShowTimePicker, False)                      'Para trabajar el timepicker (siempre dropdown)
-        'Call .WriteProperty("UseTimePicker24Hrs", m_UseTimePicker24Hrs, False)                'Para formato de 24 horas en timepicker (siempre dropdown)
+        'Call .WriteProperty("ShowTimePicker", m_ShowTimePicker, False)                          'Para trabajar el timepicker.
+        'Call .WriteProperty("UseTimePicker24Hrs", m_UseTimePicker24Hrs, False)                  'Para formato de 24 horas en timepicker.
+        'Call .WriteProperty("TimerWithSecond", m_TimerWithSecond, False)                        'Para usar el timer hasta los segundos.
         Call .WriteProperty("MaxRangeDays", m_MaxRangeDays, 0)
 
         'Call .WriteProperty("AlwaysShowCalendars", m_AlwaysShowCalendars, True)

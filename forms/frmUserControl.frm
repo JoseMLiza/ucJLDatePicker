@@ -8,6 +8,7 @@ Begin VB.Form frmUserControl
    ClientWidth     =   9105
    Icon            =   "frmUserControl.frx":0000
    LinkTopic       =   "Form1"
+   LockControls    =   -1  'True
    MaxButton       =   0   'False
    MinButton       =   0   'False
    ScaleHeight     =   4215
@@ -46,6 +47,9 @@ Begin VB.Form frmUserControl
       IsChild         =   -1  'True
       BackColorParent =   -2147483633
       ColsPicker      =   2
+      ShowTimePicker  =   -1  'True
+      UseTimePicker24Hrs=   -1  'True
+      MaxRangeDays    =   20
       Value           =   44562
       MinDate         =   44562
       MaxDate         =   44757
@@ -454,17 +458,17 @@ Private Sub chkProperties_Click(Index As Integer)
     With ucJLDTPicker
         Select Case Index
             Case 1 'LinkedCalendars
-                .LinkedCalendars = chkProperties(Index).Value
+                .LinkedCalendars = chkProperties(Index).value
             Case 2 'UseRangeValue
-                .UseRangeValue = chkProperties(Index).Value
+                .UseRangeValue = chkProperties(Index).value
             Case 3 'ShowRange
-                .ShowRange = chkProperties(Index).Value
+                .ShowRange = chkProperties(Index).value
             Case 4 'RightToLeft
-                .RightToLeft = chkProperties(Index).Value
+                .RightToLeft = chkProperties(Index).value
             Case 5 'AutoApply
-                .AutoApply = chkProperties(Index).Value
+                .AutoApply = chkProperties(Index).value
             Case 6 'UseGDIPString
-                .UseGDIPString = chkProperties(Index).Value
+                .UseGDIPString = chkProperties(Index).value
         End Select
     End With
 End Sub
@@ -520,7 +524,7 @@ Private Sub ucText1_ImgRightMouseUp(Button As Variant, Shift As Integer, X As Si
         ucJLDTPicker.Visible = True
         ucJLDTPicker.ShowCalendar RECT.Left, RECT.Bottom
         
-        ucJLDTPicker.Value = CDate(ucText1.Text)
+        ucJLDTPicker.value = CDate(ucText1.Text)
     End If
 End Sub
 
@@ -533,8 +537,8 @@ Private Sub ucJLDTPicker_Resize()
     Me.Height = ucJLDTPicker.Top + ucJLDTPicker.Height + 735
 End Sub
 
-Private Sub ucJLDTPicker1_ChangeDate(ByVal Value As Date)
-    ucTextValue(iText).Text = Value
+Private Sub ucJLDTPicker1_ChangeDate(ByVal value As Date)
+    ucTextValue(iText).Text = value
 End Sub
 
 Private Sub ucTextValue_ImgRightMouseUp(Index As Integer, Button As Variant, Shift As Integer, X As Single, Y As Single)
@@ -542,7 +546,7 @@ Private Sub ucTextValue_ImgRightMouseUp(Index As Integer, Button As Variant, Shi
     If Not ucJLDTPicker1.IsChild Then
         GetWindowRect ucTextValue(Index).hWnd, RECT
         ucJLDTPicker1.ShowCalendar RECT.Left, RECT.Bottom
-        ucJLDTPicker1.Value = CDate(ucTextValue(Index).Text)
+        ucJLDTPicker1.value = CDate(ucTextValue(Index).Text)
         iText = Index
     End If
 End Sub
