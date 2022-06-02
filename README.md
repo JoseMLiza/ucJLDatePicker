@@ -10,5 +10,6 @@ In the project, a control called ucText created by Leandro Ascierto has been use
 
 
 UPDATES
+
 02/06/2022:
   - The MaxRangeDays property has been enabled, with which we can limit the range of days to be selected.
