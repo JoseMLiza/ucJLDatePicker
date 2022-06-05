@@ -9,7 +9,7 @@ This has a very important property, which allows us to use the control as a chil
 In the project, a control called ucText created by Leandro Ascierto has been used, which can be found on his website http://leandroascierto.com/blog/uctext-custom-texbox-unicode/
 
 
-UPDATES
+# Updates
 
 02/06/2022:
   - The MaxRangeDays property has been enabled, with which we can limit the range of days to be selected.
