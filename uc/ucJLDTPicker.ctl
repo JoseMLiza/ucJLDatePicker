@@ -661,7 +661,8 @@ Private m_CountReservedDay              As Boolean
 Private m_CountSelDays                  As Integer
 Private m_SinglePicker                  As Boolean
 Private m_UseRangeValue                 As Boolean
-Private m_ShowRange                     As Boolean
+Private m_ShowRangeButtons              As Boolean
+Private m_ShowTodayButton               As Boolean
 Private m_RightToLeft                   As Boolean
 Private m_AutoApply                     As Boolean
 Private m_IsChild                       As Boolean
@@ -719,6 +720,7 @@ Private m_DayFont                       As StdFont
 Private m_DayForeColor                  As OLE_COLOR
 Private m_DayHeaderFontBold             As Boolean
 Private m_DayHeaderForeColor            As OLE_COLOR
+Private m_DayHotColor                   As OLE_COLOR
 Private m_DayOMForeColor                As OLE_COLOR
 Private m_DayFreeArray                  As Variant
 Private m_DayFreeForeColor              As OLE_COLOR
@@ -738,7 +740,7 @@ Private m_DaySelValuesColor             As OLE_COLOR
 Private m_DaySelForeColor               As OLE_COLOR
 Private m_DaySelFontBold                As Boolean
 Private m_DaySelectionStyle             As enmSelectionStyle
-Private m_DayShowHotItem                As Boolean
+'Private m_DayShowHotItem                As Boolean 'Siempre muestra el hot
 Private m_DaySaturdayForeColor          As OLE_COLOR
 Private m_DaySundayForeColor            As OLE_COLOR
 Private m_DayWidth                      As Long
@@ -1081,16 +1083,28 @@ Public Property Let UseRangeValue(ByVal Value As Boolean)
     If m_IsChild Then Draw: Refresh
 End Property
 
-'m_ShowRange                     As Boolean
-Public Property Get ShowRange() As Boolean
-    ShowRange = m_ShowRange
+'m_ShowRangeButtons              As Boolean
+Public Property Get ShowRangeButtons() As Boolean
+    ShowRangeButtons = m_ShowRangeButtons
 End Property
 
-Public Property Let ShowRange(ByVal Value As Boolean)
-    m_ShowRange = Value
-    PropertyChanged "ShowRange"
+Public Property Let ShowRangeButtons(ByVal Value As Boolean)
+    m_ShowRangeButtons = Value
+    PropertyChanged "ShowRangeButtons"
     If m_IsChild Then InitControl: Draw: Refresh
 End Property
+
+'m_ShowTodayButton               As Boolean
+Public Property Get ShowTodayButton() As Boolean
+    ShowTodayButton = m_ShowTodayButton
+End Property
+
+Public Property Let ShowTodayButton(ByVal Value As Boolean)
+    m_ShowTodayButton = Value
+    PropertyChanged "ShowTodayButton"
+    If m_IsChild Then InitControl: Draw: Refresh
+End Property
+
 
 'm_RightToLeft                   As Boolean
 Public Property Get RightToLeft() As Boolean
@@ -1114,6 +1128,7 @@ Public Property Let AutoApply(ByVal Value As Boolean)
 '        MsgBox "Cannot enable AutoApply if control is child", vbInformation + vbOKOnly, UserControl.Name
 '        m_AutoApply = False
 '    End If
+    ShowTodayButton = IIF(m_AutoApply, True, False)
     PropertyChanged "AutoApply"
     If m_IsChild Then InitControl: Draw: Refresh
 End Property
@@ -1821,6 +1836,16 @@ Public Property Let DayHeaderForeColor(ByVal Value As OLE_COLOR)
     If m_IsChild Then Draw: Refresh
 End Property
 
+'m_DayHotColor                   As OLE_COLOR
+Public Property Get DayHotColor() As OLE_COLOR
+    DayHotColor = m_DayHotColor
+End Property
+Public Property Let DayHotColor(ByVal Value As OLE_COLOR)
+    m_DayHotColor = Value
+    PropertyChanged "DayHotColor"
+    If m_IsChild Then Draw: Refresh
+End Property
+
 'm_DayForeColor                  As OLE_COLOR
 Public Property Get DayForeColor() As OLE_COLOR
     DayForeColor = m_DayForeColor
@@ -1991,14 +2016,14 @@ Public Property Let DaySelectionStyle(ByVal Value As enmSelectionStyle)
     If m_IsChild Then Draw: Refresh
 End Property
 
-'m_DayShowHotItem                As Boolean
-Public Property Get DayShowHotItem() As Boolean
-    DayShowHotItem = m_DayShowHotItem
-End Property
-Public Property Let DayShowHotItem(ByVal Value As Boolean)
-    m_DayShowHotItem = Value
-    PropertyChanged "DayShowHotItem"
-End Property
+'m_DayShowHotItem                As Boolean 'Siempre muestra el hot
+'Public Property Get DayShowHotItem() As Boolean
+'    DayShowHotItem = m_DayShowHotItem
+'End Property
+'Public Property Let DayShowHotItem(ByVal Value As Boolean)
+'    m_DayShowHotItem = Value
+'    PropertyChanged "DayShowHotItem"
+'End Property
 
 
 'm_DaySaturdayForeColor          As OLE_COLOR
@@ -2217,6 +2242,7 @@ Private Sub UserControl_Initialize()
     If IsChild Then udtItemsActionButton(2).IsVisible = False
     '---
     m_Redraw = True
+    '---
 End Sub
 
 Private Sub UserControl_InitProperties()
@@ -2237,7 +2263,8 @@ Private Sub UserControl_InitProperties()
     '--
     m_SinglePicker = False
     m_UseRangeValue = False
-    m_ShowRange = False                             'Para mostrar los rangos predefinidos por el usuario(Today, Yesterday, Last 7 days, Last 30 days, This Month, Last Month, Custom Range)
+    m_ShowRangeButtons = False                             'Para mostrar los rangos predefinidos por el usuario(Today, Yesterday, Last 7 days, Last 30 days, This Month, Last Month, Custom Range)
+    m_ShowTodayButton = False
     m_RightToLeft = False
     m_AutoApply = True
     m_IsChild = False
@@ -2306,6 +2333,7 @@ Private Sub UserControl_InitProperties()
     Set m_DayFont = UserControl.Ambient.Font
     m_DayHeaderFontBold = True
     m_DayHeaderForeColor = SystemColorConstants.vbButtonText
+    m_DayHotColor = SystemColorConstants.vbHighlight
     m_DayForeColor = SystemColorConstants.vbButtonText
     m_DayOMForeColor = SystemColorConstants.vbGrayText
     m_DayFreeForeColor = ColorConstants.vbRed
@@ -2326,7 +2354,7 @@ Private Sub UserControl_InitProperties()
     m_DaySelForeColor = &HFFFFFF
     m_DaySelFontBold = True
     m_DaySelectionStyle = [Corner No Between]
-    m_DayShowHotItem = True
+    'm_DayShowHotItem = True 'Siempre muestra el hot
     m_DaySaturdayForeColor = &H999999
     m_DaySundayForeColor = &H999999
     m_DayWidth = 24
@@ -2415,7 +2443,7 @@ Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Sing
     '---
 
     '-> Botones de los rangos de fecha.
-    If m_ShowRange And m_UseRangeValue Then
+    If m_ShowRangeButtons And m_UseRangeValue Then
         For i = 0 To UBound(udtItemsRangeButton)
             With udtItemsRangeButton(i)
                 If PtInRect(.RECT2, X, Y) Then
@@ -2430,7 +2458,7 @@ Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Sing
     '---
 
     '-> Botones de accion.
-    If Not m_AutoApply Then
+    If Not m_AutoApply Or m_ShowTodayButton Then
         For i = 0 To UBound(udtItemsActionButton)
             With udtItemsActionButton(i)
                 If PtInRect(.RECT2, X, Y) Then
@@ -2677,7 +2705,7 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
     '---
 
     '-> Botones de rangos.
-    If m_ShowRange And m_UseRangeValue Then
+    If m_ShowRangeButtons And m_UseRangeValue Then
         For i = 0 To UBound(udtItemsRangeButton)
             With udtItemsRangeButton(i)
                 If PtInRect(.RECT2, X, Y) Then
@@ -2701,7 +2729,7 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
     '---
 
     '-> Botones de accion.
-    If Not m_AutoApply Then
+    If Not m_AutoApply Or m_ShowTodayButton Then
         For i = 0 To UBound(udtItemsActionButton)
             With udtItemsActionButton(i)
                 If PtInRect(.RECT2, X, Y) Then
@@ -2942,7 +2970,7 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
     '---
 
     '-> Botones de rangos.
-    If m_ShowRange And m_UseRangeValue Then
+    If m_ShowRangeButtons And m_UseRangeValue Then
         For i = 0 To UBound(udtItemsRangeButton)
             With udtItemsRangeButton(i)
                 If PtInRect(.RECT2, X, Y) Then
@@ -2958,7 +2986,7 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
     '---
 
     '-> Botones de accion.
-    If Not m_AutoApply Then
+    If Not m_AutoApply Or m_ShowTodayButton Then
         For i = 0 To UBound(udtItemsActionButton)
             With udtItemsActionButton(i)
                 If PtInRect(.RECT2, X, Y) Then
@@ -3009,6 +3037,7 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
     'hFontCollection = ReadValue(&HFC)
     '---
     c_hWnd = UserControl.ContainerHwnd
+    If Ambient.UserMode Then UserControl.Picture = Nothing
     '---
     With PropBag
         m_BackColor = .ReadProperty("BackColor", &HFFFFFF)
@@ -3038,7 +3067,8 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         '--
         m_SinglePicker = .ReadProperty("SinglePicker", False)
         m_UseRangeValue = .ReadProperty("UseRangeValue", False)
-        m_ShowRange = .ReadProperty("ShowRange", False)
+        m_ShowRangeButtons = .ReadProperty("ShowRangeButtons", False)
+        m_ShowTodayButton = .ReadProperty("ShowTodayButton", False)
         m_RightToLeft = .ReadProperty("RightToLeft", False)
         m_AutoApply = .ReadProperty("AutoApply", True)
         m_IsChild = .ReadProperty("IsChild", False)
@@ -3067,7 +3097,7 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         
         '---> De los botones de navegacion.
         m_ButtonNavBackColor = .ReadProperty("ButtonNavBackColor", &HFFFFFF)
-        m_ButtonNavBorderWidth = .ReadProperty("ButtonNavBorderWidth ", 1)
+        m_ButtonNavBorderWidth = .ReadProperty("ButtonNavBorderWidth", 1)
         m_ButtonNavBorderColor = .ReadProperty("ButtonNavBorderColor", SystemColorConstants.vbActiveBorder)
         m_ButtonNavCornerRadius = .ReadProperty("ButtonNavCornerRadius", 0)
         m_ButtonNavForeColor = .ReadProperty("ButtonNavForeColor", SystemColorConstants.vbButtonText)
@@ -3115,6 +3145,7 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         Set m_DayFont = .ReadProperty("DayFont", Ambient.Font)
         m_DayHeaderFontBold = .ReadProperty("DayHeaderFontBold", True)
         m_DayHeaderForeColor = .ReadProperty("DayHeaderForeColor", SystemColorConstants.vbButtonText)
+        m_DayHotColor = .ReadProperty("DayHotColor", SystemColorConstants.vbHighlight)
         m_DayForeColor = .ReadProperty("DayForeColor", SystemColorConstants.vbButtonText)
         m_DayOMForeColor = .ReadProperty("DayOMForeColor", SystemColorConstants.vbGrayText)
         m_DayFreeArray = .ReadProperty("DayFreeArray", Null)
@@ -3124,7 +3155,7 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         m_DayNowBorderWidth = .ReadProperty("DayNowBorderWidth", 0)
         m_DayNowBorderColor = .ReadProperty("DayNowBorderColor", SystemColorConstants.vbActiveBorder)
         m_DayNowBackColor = .ReadProperty("DayNowBackColor", &HFFFFFF)
-        m_DayNowForeColor = .ReadProperty("DayNowForeColor ", SystemColorConstants.vbButtonText)
+        m_DayNowForeColor = .ReadProperty("DayNowForeColor", SystemColorConstants.vbButtonText)
         
         'Mouse event (Los días no tendran color para el mousedown)
         m_DayOverBackColor = .ReadProperty("DayOverBackColor", &H999999)
@@ -3136,7 +3167,7 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         m_DaySelForeColor = .ReadProperty("DaySelForeColor", &HFFFFFF)
         m_DaySelFontBold = .ReadProperty("DaySelFontBold", True)
         m_DaySelectionStyle = .ReadProperty("DaySelectionStyle", [Corner No Between])
-        m_DayShowHotItem = .ReadProperty("DayShowHotItem", True)
+        'm_DayShowHotItem = .ReadProperty("DayShowHotItem", True) 'Siempre muestra el hot
         m_DaySaturdayForeColor = .ReadProperty("DaySaturdayForeColor", &H999999)
         m_DaySundayForeColor = .ReadProperty("DaySundayForeColor", &H999999)
         m_DayWidth = .ReadProperty("DayWidth", 24)
@@ -3253,7 +3284,8 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         '--
         Call .WriteProperty("SinglePicker", m_SinglePicker, False)
         Call .WriteProperty("UseRangeValue", m_UseRangeValue, False)
-        Call .WriteProperty("ShowRange", m_ShowRange, False)
+        Call .WriteProperty("ShowRangeButtons", m_ShowRangeButtons, False)
+        Call .WriteProperty("ShowTodayButton", m_ShowTodayButton, False)
         Call .WriteProperty("RightToLeft", m_RightToLeft, False)
         Call .WriteProperty("AutoApply", m_AutoApply, True)
         Call .WriteProperty("IsChild", m_IsChild, False)
@@ -3332,6 +3364,7 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         Call .WriteProperty("DayFont", m_DayFont, Ambient.Font)
         Call .WriteProperty("DayHeaderFontBold", m_DayHeaderFontBold, True)
         Call .WriteProperty("DayHeaderForeColor", m_DayHeaderForeColor, SystemColorConstants.vbButtonText)
+        Call .WriteProperty("DayHotColor", m_DayHotColor, SystemColorConstants.vbHighlight)
         Call .WriteProperty("DayForeColor", m_DayForeColor, SystemColorConstants.vbButtonText)
         Call .WriteProperty("DayOMForeColor", m_DayOMForeColor, SystemColorConstants.vbGrayText)
         Call .WriteProperty("DayFreeArray", m_DayFreeArray, Null)
@@ -3352,7 +3385,7 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         Call .WriteProperty("DaySelForeColor", m_DaySelForeColor, &HFFFFFF)
         Call .WriteProperty("DaySelFontBold", m_DaySelFontBold, True)
         Call .WriteProperty("DaySelectionStyle", m_DaySelectionStyle, [Corner No Between])
-        Call .WriteProperty("DayShowHotItem", m_DayShowHotItem, True)
+        'Call .WriteProperty("DayShowHotItem", m_DayShowHotItem, True) ' Seimpre muestra el hot
         Call .WriteProperty("DaySaturdayForeColor", m_DaySaturdayForeColor, &H999999)
         Call .WriteProperty("DaySundayForeColor", m_DaySundayForeColor, &H999999)
         Call .WriteProperty("DayWidth", m_DayWidth, 24)
@@ -3590,7 +3623,7 @@ Private Sub InitControl()
     'Botones de rangos.
     'udtItemsRangeButton(5) 'Para botones de rangos ('Hoy', 'Este mes', 'Mes pasado', 'Ultimos 90 días', 'Este Año', 'Año pasado')
     'Definir nombres en los botones de rangos:
-    If m_ShowRange And m_UseRangeValue Then
+    If m_ShowRangeButtons And m_UseRangeValue Then
         '--
         btnWidth = 0
         For i = 0 To UBound(udtItemsRangeButton)
@@ -3625,9 +3658,9 @@ Private Sub InitControl()
     'Botones de accion.
     'udtItemsActionButton(2) 'Para botones de rangos ('Hoy', 'Cancelar', 'Aplicar')
     'Definir nombres en los botones de accion:
-    If Not m_AutoApply Then
+    If Not m_AutoApply Or m_ShowTodayButton Then
         btnWidth = 0
-        countItem = UBound(udtItemsActionButton) - IIF(IsChild, 1, 0)
+        countItem = UBound(udtItemsActionButton) - IIF(m_ShowTodayButton, 2, IIF(IsChild, 1, 0))
         For i = 0 To countItem
             With udtItemsActionButton(i)
                 SetRect sRECTL, 0, 0, 0, 0
@@ -3653,7 +3686,6 @@ Private Sub InitControl()
         Next
     End If
     
-    
     'Ajustar tamaño de control segun los calendarios.
     With UserControl
         i = m_NumberPickers - 1
@@ -3662,8 +3694,8 @@ Private Sub InitControl()
             a = RoundUp(m_NumberPickers / m_ColsPicker)
             i = 0
         End If
-        c_Width = (((udtItemsPicker(i).RECT.Left + udtItemsPicker(i).RECT.Width) * IIF(m_ColsPicker, m_ColsPicker, 1)) + PaddingX + IIF(m_ShowRange And m_UseRangeValue, udtItemsRangeButton(0).RECT.Width + (PaddingX * 2), 0) + IIF(m_CallOutPosition = [Position Right] And Not m_IsChild, coWidth, 0)) * Screen.TwipsPerPixelX
-        c_Height = (((udtItemsPicker(0).RECT.Top + udtItemsPicker(0).RECT.Height) * a) + PaddingY + IIF(Not m_AutoApply, udtItemsActionButton(0).RECT.Height + PaddingY, 0) + IIF(m_CallOutPosition = [Position Bottom] And Not m_IsChild, coHeight, 0)) * Screen.TwipsPerPixelX
+        c_Width = (((udtItemsPicker(i).RECT.Left + udtItemsPicker(i).RECT.Width) * IIF(m_ColsPicker, m_ColsPicker, 1)) + PaddingX + IIF(m_ShowRangeButtons And m_UseRangeValue, udtItemsRangeButton(0).RECT.Width + (PaddingX * 2), 0) + IIF(m_CallOutPosition = [Position Right] And Not m_IsChild, coWidth, 0)) * Screen.TwipsPerPixelX
+        c_Height = (((udtItemsPicker(0).RECT.Top + udtItemsPicker(0).RECT.Height) * a) + PaddingY + IIF(Not m_AutoApply Or m_ShowTodayButton, udtItemsActionButton(0).RECT.Height + PaddingY, 0) + IIF(m_CallOutPosition = [Position Bottom] And Not m_IsChild, coHeight, 0)) * Screen.TwipsPerPixelX
         '---
         .Size c_Width, c_Height
     End With
@@ -3897,13 +3929,13 @@ Private Sub ResetControl()
     Next
     'Botones
     '-Ranges
-    If m_ShowRange Then
+    If m_ShowRangeButtons Then
         For i = 0 To UBound(udtItemsRangeButton)
             udtItemsRangeButton(i).MouseState = Normal
         Next
     End If
     '-AutoApply
-    If Not m_AutoApply Then
+    If Not m_AutoApply Or m_ShowTodayButton Then
         For i = 0 To UBound(udtItemsActionButton)
             udtItemsActionButton(i).MouseState = Normal
         Next
@@ -4028,8 +4060,8 @@ Private Sub Draw()
             If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorDays Then
                 SetRect lRect, .RECT.Left, .RECT.Top, .RECT.Width, .RECT.Height
                 DrawRoundRect hGraphics, lRect, Corners, m_DayBackColor, m_DayBorderWidth, m_DayBorderColor
-                If m_UseGDIPString Then GdiPlusDrawString hGraphics, .Caption, .RECT.Left, .RECT.Top, .RECT.Width, .RECT.Height, m_DayFont, m_DayForeColor, StringAlignmentCenter, StringAlignmentCenter, True
-                If Not m_UseGDIPString Then DrawText hdc, .Caption, .RECT.Left, .RECT.Top, .RECT.Left + .RECT.Width, .RECT.Top + .RECT.Height, m_DayFont, m_DayForeColor, StringAlignmentCenter, StringAlignmentCenter, True
+                If m_UseGDIPString Then GdiPlusDrawString hGraphics, .Caption, .RECT.Left, .RECT.Top, .RECT.Width, .RECT.Height, m_DayFont, m_DayHeaderForeColor, StringAlignmentCenter, StringAlignmentCenter, m_DayHeaderFontBold
+                If Not m_UseGDIPString Then DrawText hdc, .Caption, .RECT.Left, .RECT.Top, .RECT.Left + .RECT.Width, .RECT.Top + .RECT.Height, m_DayFont, m_DayHeaderForeColor, StringAlignmentCenter, StringAlignmentCenter, m_DayHeaderFontBold
             End If
         End With
     Next
@@ -4087,7 +4119,8 @@ Private Sub Draw()
                         .TopLeft = m_DayCornerRadius: .TopRight = m_DayCornerRadius: .BottomLeft = m_DayCornerRadius: .BottomRight = m_DayCornerRadius
                     End With
                     '---
-                    If .MouseState = Hot Then BackColor = ShiftColor(m_BackColor, m_DaySelValuesColor, 200)
+                    'If .MouseState = Hot Then BackColor = ShiftColor(m_BackColor, m_DaySelValuesColor, 200) 'm_DayHotColor
+                    If .MouseState = Hot Then BackColor = m_DayHotColor
                     If .MouseState = Normal Then BackColor = m_DayBackColor
                     '---
                     IsBold = False
@@ -4179,7 +4212,7 @@ Private Sub Draw()
                             .NumberWeek = udtItemsDay(((a - i) * cs_ColsDay) - 1).NumberWeek
                         End If
                         IsBold = IIF(a Mod cs_RowsPicker = 0, True, False)
-                        .Caption = IIF(a Mod cs_RowsPicker = 0, "Sm", .NumberWeek)
+                        .Caption = IIF(a Mod cs_RowsPicker = 0, "#", .NumberWeek)
                         '---
                         SetRect lRect, .RECT.Left, .RECT.Top, .RECT.Width, .RECT.Height
                         DrawRoundRect hGraphics, lRect, Corners, m_WeekBackColor, m_WeekBorderWidth, m_WeekBorderColor
@@ -4235,7 +4268,7 @@ Private Sub Draw()
     Next
 
     '-> Pintar Botones de rangos.
-    If m_ShowRange And m_UseRangeValue Then
+    If m_ShowRangeButtons And m_UseRangeValue Then
         With Corners
             .TopLeft = m_ButtonsCornerRadius: .TopRight = m_ButtonsCornerRadius
             .BottomLeft = m_ButtonsCornerRadius: .BottomRight = m_ButtonsCornerRadius
@@ -4266,8 +4299,8 @@ Private Sub Draw()
     End If
 
     '-> Pintar Botones de accion.
-    If Not m_AutoApply Then
-        countItem = UBound(udtItemsActionButton) - IIF(IsChild, 1, 0)
+    If Not m_AutoApply Or m_ShowTodayButton Then
+        countItem = UBound(udtItemsActionButton) - IIF(m_ShowTodayButton, 2, IIF(IsChild, 1, 0))
         With Corners
             .TopLeft = m_ButtonsCornerRadius: .TopRight = m_ButtonsCornerRadius
             .BottomLeft = m_ButtonsCornerRadius: .BottomRight = m_ButtonsCornerRadius

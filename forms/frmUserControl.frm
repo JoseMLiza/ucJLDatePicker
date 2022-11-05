@@ -47,12 +47,10 @@ Begin VB.Form frmUserControl
       IsChild         =   -1  'True
       BackColorParent =   -2147483633
       ColsPicker      =   2
-      ShowTimePicker  =   -1  'True
-      UseTimePicker24Hrs=   -1  'True
-      MaxRangeDays    =   20
-      Value           =   44562
+      MaxRangeDays    =   10
+      Value           =   44866
       MinDate         =   44562
-      MaxDate         =   44757
+      MaxDate         =   44926
       FirstDayOfWeek  =   2
       ButtonNavCornerRadius=   12
       BeginProperty ButtonNavIcoFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
@@ -73,13 +71,14 @@ Begin VB.Form frmUserControl
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
+      MonthYearBackColor=   -2147483643
       MonthYearBorderWidth=   1
       MonthYearCornerRadius=   5
       BeginProperty MonthYearFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
-         Name            =   "Segoe UI"
+         Name            =   "Segoe UI Semibold"
          Size            =   11.25
          Charset         =   0
-         Weight          =   400
+         Weight          =   600
          Underline       =   0   'False
          Italic          =   0   'False
          Strikethrough   =   0   'False
@@ -299,6 +298,7 @@ Begin VB.Form frmUserControl
       ShadowSize      =   2
       ShadowOpacity   =   10
       SpaceGrid       =   1
+      ShowTodayButton =   -1  'True
       BackColorParent =   -2147483633
       ColsPicker      =   1
       NumberPickers   =   1
@@ -458,17 +458,17 @@ Private Sub chkProperties_Click(Index As Integer)
     With ucJLDTPicker
         Select Case Index
             Case 1 'LinkedCalendars
-                .LinkedCalendars = chkProperties(Index).value
+                .LinkedCalendars = chkProperties(Index).Value
             Case 2 'UseRangeValue
-                .UseRangeValue = chkProperties(Index).value
+                .UseRangeValue = chkProperties(Index).Value
             Case 3 'ShowRange
-                .ShowRange = chkProperties(Index).value
+                .ShowRangeButtons = chkProperties(Index).Value
             Case 4 'RightToLeft
-                .RightToLeft = chkProperties(Index).value
+                .RightToLeft = chkProperties(Index).Value
             Case 5 'AutoApply
-                .AutoApply = chkProperties(Index).value
+                .AutoApply = chkProperties(Index).Value
             Case 6 'UseGDIPString
-                .UseGDIPString = chkProperties(Index).value
+                .UseGDIPString = chkProperties(Index).Value
         End Select
     End With
 End Sub
@@ -524,7 +524,7 @@ Private Sub ucText1_ImgRightMouseUp(Button As Variant, Shift As Integer, X As Si
         ucJLDTPicker.Visible = True
         ucJLDTPicker.ShowCalendar RECT.Left, RECT.Bottom
         
-        ucJLDTPicker.value = CDate(ucText1.Text)
+        ucJLDTPicker.Value = CDate(ucText1.Text)
     End If
 End Sub
 
@@ -537,8 +537,8 @@ Private Sub ucJLDTPicker_Resize()
     Me.Height = ucJLDTPicker.Top + ucJLDTPicker.Height + 735
 End Sub
 
-Private Sub ucJLDTPicker1_ChangeDate(ByVal value As Date)
-    ucTextValue(iText).Text = value
+Private Sub ucJLDTPicker1_ChangeDate(ByVal Value As Date)
+    ucTextValue(iText).Text = Value
 End Sub
 
 Private Sub ucTextValue_ImgRightMouseUp(Index As Integer, Button As Variant, Shift As Integer, X As Single, Y As Single)
@@ -546,7 +546,7 @@ Private Sub ucTextValue_ImgRightMouseUp(Index As Integer, Button As Variant, Shi
     If Not ucJLDTPicker1.IsChild Then
         GetWindowRect ucTextValue(Index).hWnd, RECT
         ucJLDTPicker1.ShowCalendar RECT.Left, RECT.Bottom
-        ucJLDTPicker1.value = CDate(ucTextValue(Index).Text)
+        ucJLDTPicker1.Value = CDate(ucTextValue(Index).Text)
         iText = Index
     End If
 End Sub
