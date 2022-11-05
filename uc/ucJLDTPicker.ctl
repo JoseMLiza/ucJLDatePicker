@@ -2430,7 +2430,7 @@ Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Sing
                     If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
                         bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
                     Else
-                        bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
                     End If
                     If Not bTemp Then
                         .MouseState = Pressed
@@ -2658,7 +2658,7 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
                                     If udtItemsPicker(a).ViewNavigator = ViewItemNavigatorMonths Then
                                         bTemp = DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) > m_MaxDate
                                     Else
-                                        bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
                                     End If
                                     If Not bTemp Then
                                         If .MouseState = Normal Then
@@ -2938,7 +2938,7 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                     If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
                         bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
                     Else
-                        bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
                     End If
                     If Not bTemp Then
                         If .MouseState = Pressed Then
@@ -3732,7 +3732,7 @@ Private Sub InitControl()
                 If IsDate(m_ValueStart) Then dDate(i) = DateAdd("m", i, DateSerial(Year(m_ValueStart), Month(m_ValueStart), 1))
             Else
                 If Not IsDate(m_ValueEnd) Then dDate(i) = DateAdd("m", i, DateSerial(Year(m_Value), Month(m_Value), 1))
-                If IsDate(m_ValueEnd) Then dDate(i) = DateAdd("m", IIF(Month(m_ValueStart) <> Month(m_ValueEnd), 0, i), DateSerial(Year(m_ValueEnd), Month(m_ValueEnd), 1))
+                If IsDate(m_ValueStart) And IsDate(m_ValueEnd) Then dDate(i) = DateAdd("m", IIF(Month(m_ValueStart) <> Month(m_ValueEnd), 0, i), DateSerial(Year(m_ValueEnd), Month(m_ValueEnd), 1))
             End If
         End If
         '---

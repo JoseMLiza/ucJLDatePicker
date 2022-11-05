@@ -47,7 +47,6 @@ Begin VB.Form frmUserControl
       IsChild         =   -1  'True
       BackColorParent =   -2147483633
       ColsPicker      =   2
-      MaxRangeDays    =   10
       Value           =   44866
       MinDate         =   44562
       MaxDate         =   44926
@@ -298,11 +297,10 @@ Begin VB.Form frmUserControl
       ShadowSize      =   2
       ShadowOpacity   =   10
       SpaceGrid       =   1
-      ShowTodayButton =   -1  'True
+      AutoApply       =   0   'False
       BackColorParent =   -2147483633
       ColsPicker      =   1
       NumberPickers   =   1
-      LinkedCalendars =   0   'False
       Value           =   44562
       FirstDayOfWeek  =   2
       ButtonNavCornerRadius=   12
