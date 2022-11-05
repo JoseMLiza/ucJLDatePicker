@@ -11,5 +11,11 @@ In the project, a control called ucText created by Leandro Ascierto has been use
 
 # Updates
 
-02/06/2022:
+**02/06/2022:**
   - The MaxRangeDays property has been enabled, with which we can limit the range of days to be selected.
+
+**04/11/2022:**
+  - Fixed some bugs in some properties.
+  - New properties added.
+    - **ShowTodayButton:** to enable the current day button when AutoApply is True
+    - **DayHotColor:** To control the color that will be displayed when the mouse is over someday
