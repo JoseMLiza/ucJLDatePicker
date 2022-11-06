@@ -297,7 +297,7 @@ Begin VB.Form frmUserControl
       ShadowSize      =   2
       ShadowOpacity   =   10
       SpaceGrid       =   1
-      AutoApply       =   0   'False
+      ShowTodayButton =   -1  'True
       BackColorParent =   -2147483633
       ColsPicker      =   1
       NumberPickers   =   1
