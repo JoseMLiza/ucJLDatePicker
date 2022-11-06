@@ -2428,11 +2428,11 @@ Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Sing
             If udtItemsPicker(.IndexCalendar).ViewNavigator <> ViewItemNavigatorDays Then
                 If PtInRect(.RECT2, X, Y) Then
                     If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
-                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
+                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) >= m_MinDate And DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) <= m_MaxDate
                     Else
-                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                        bTemp = .ValueItem >= Year(m_MinDate) And .ValueItem <= Year(m_MaxDate)
                     End If
-                    If Not bTemp Then
+                    If bTemp Then
                         .MouseState = Pressed
                         Call Draw ': Refresh
                     End If
@@ -2475,6 +2475,7 @@ End Sub
 
 Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
     Dim i, a As Integer
+    Dim j, k As Integer
     Dim ET As TRACKMOUSEEVENTTYPE
     Dim newRect As RECT
     Dim iTmpValue As Integer
@@ -2610,10 +2611,27 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
                                             ShowHandPointer True
                                             '--
                                             If IsDate(d_ValueStartTemp) Then
-                                                If (m_MaxRangeDays And DateDiff("d", d_ValueStartTemp, .DateValue, m_FirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
-                                                    If ((CDate(d_ValueStartTemp) <= .DateValue) And d_ValueEndTemp = "") Then
+                                                If (m_MaxRangeDays > 0 And DateDiff("d", CDate(d_ValueStartTemp), CDate(.DateValue), m_FirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
+                                                    If ((CDate(d_ValueStartTemp) <= CDate(.DateValue)) And d_ValueEndTemp = "") Then
                                                         c_IndexSelMove = i
                                                     End If
+                                                ElseIf m_MaxRangeDays > 0 And CDate(.DateValue) > DateAdd("d", m_MaxRangeDays - 1, CDate(d_ValueStartTemp)) Then
+                                                    For j = iCalendar To iCalendar
+                                                        With udtItemsPicker(j)
+                                                            If PtInRect(.RECT2, X, Y) Then
+                                                                For k = 0 To UBound(udtItemsDay)
+                                                                    With udtItemsDay(k)
+                                                                        If .DateValue = DateAdd("d", m_MaxRangeDays - 1, CDate(d_ValueStartTemp)) Then
+                                                                            c_IndexSelMove = k
+                                                                        End If
+                                                                    End With
+                                                                Next
+                                                            End If
+                                                        End With
+                                                    Next
+                                                End If
+                                                If (CDate(.DateValue) < CDate(d_ValueStartTemp)) Then
+                                                    c_IndexSelMove = -1
                                                 End If
                                             End If
                                             tmrMouseEvent.Interval = 2
@@ -2656,11 +2674,11 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
                             With udtItemsMonthYear(i)
                                 If PtInRect(.RECT2, X, Y) Then
                                     If udtItemsPicker(a).ViewNavigator = ViewItemNavigatorMonths Then
-                                        bTemp = DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) > m_MaxDate
+                                        bTemp = DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) >= m_MinDate And DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) <= m_MaxDate
                                     Else
-                                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                                        bTemp = .ValueItem >= Year(m_MinDate) And .ValueItem <= Year(m_MaxDate)
                                     End If
-                                    If Not bTemp Then
+                                    If bTemp Then
                                         If .MouseState = Normal Then
                                             .MouseState = IIF(Button = vbLeftButton, Pressed, Hot)
                                             '--
@@ -2757,7 +2775,7 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
     Dim i As Integer, a As Integer, M As Integer
     Dim dDate As Date
     Dim pi_Temp As Integer
-    Dim J As Integer
+    Dim j As Integer
     Dim bTemp As Boolean
     '-> Botones de navegacion del calendario(s)
     For i = 0 To UBound(udtItemsNavButton)
@@ -2815,8 +2833,8 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
             If PtInRect(.TitleMonthYear.RECT2, X, Y) Then
                 If .TitleMonthYear.MouseState = Pressed Then
                     .TitleMonthYear.MouseState = Hot
-                    For J = 0 To UBound(udtItemsPicker)
-                        With udtItemsPicker(J)
+                    For j = 0 To UBound(udtItemsPicker)
+                        With udtItemsPicker(j)
                             If .ViewNavigator <> ViewItemNavigatorDays And .IndexCalendar <> i Then
                                 If DateSerial(.NumberYear, .NumberMonth, 1) <> .DateInPicker Then
                                     .NumberMonth = Month(.DateInPicker)
@@ -2936,11 +2954,11 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
             If udtItemsPicker(.IndexCalendar).ViewNavigator <> ViewItemNavigatorDays Then
                 If PtInRect(.RECT2, X, Y) Then
                     If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
-                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
+                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) >= m_MinDate And DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) <= m_MaxDate
                     Else
-                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                        bTemp = .ValueItem >= Year(m_MinDate) And .ValueItem <= Year(m_MaxDate)
                     End If
-                    If Not bTemp Then
+                    If bTemp Then
                         If .MouseState = Pressed Then
                             .MouseState = Hot
                             '---
@@ -3787,7 +3805,7 @@ End Sub
 'Calcular posicion y tamaño de los items para el grid de los meses y años de navegacion.
 Private Sub ChangeViewPicker()
     Dim i As Integer
-    Dim J As Integer
+    Dim j As Integer
     Dim jump As Integer
     Dim areaRect As RECTL
     Dim startYear As Integer
@@ -3806,16 +3824,16 @@ Private Sub ChangeViewPicker()
             End With
             '---
             If udtItemsPicker(i).ViewNavigator = ViewItemNavigatorYears Then startYear = (Fix(Val(udtItemsPicker(i).NumberYear) / 10) * 10) - 1
-            For J = 0 To UBound(udtItemsMonthYear) - 1
-                If J > 0 And J Mod cs_ColsMonthYear = 0 Then jump = jump + 1
-                With udtItemsMonthYear(J)
-                    .RECT.Left = areaRect.Left + m_SpaceGrid + (Fix(areaRect.Width / cs_ColsMonthYear) * (J Mod cs_ColsMonthYear))
+            For j = 0 To UBound(udtItemsMonthYear) - 1
+                If j > 0 And j Mod cs_ColsMonthYear = 0 Then jump = jump + 1
+                With udtItemsMonthYear(j)
+                    .RECT.Left = areaRect.Left + m_SpaceGrid + (Fix(areaRect.Width / cs_ColsMonthYear) * (j Mod cs_ColsMonthYear))
                     .RECT.Top = areaRect.Top + m_SpaceGrid + Fix(areaRect.Height / cs_RowsMonthYear) * jump
                     .RECT.Width = Fix(areaRect.Width / cs_ColsMonthYear) - m_SpaceGrid
                     .RECT.Height = Fix(areaRect.Height / cs_RowsMonthYear) - m_SpaceGrid
                     If udtItemsPicker(i).ViewNavigator = ViewItemNavigatorMonths Then
-                        .Caption = MonthName(J + 1, True) & "."
-                        .ValueItem = J + 1
+                        .Caption = MonthName(j + 1, True) & "."
+                        .ValueItem = j + 1
                     ElseIf udtItemsPicker(i).ViewNavigator = ViewItemNavigatorYears Then
                         .ValueItem = startYear
                         .Caption = CStr(.ValueItem)
@@ -3826,9 +3844,9 @@ Private Sub ChangeViewPicker()
                 End With
             Next
             '---
-            For J = 0 To UBound(udtItemsUpDownButton)
-                With udtItemsUpDownButton(J)
-                    .RECT.Left = IIF(J Mod 2 = 0, udtItemsPicker(i).TitleMonthYear.RECT.Left, udtItemsPicker(i).TitleMonthYear.RECT.Left + (udtItemsPicker(i).TitleMonthYear.RECT.Width - (udtItemsPicker(i).TitleMonthYear.RECT.Width / 6) - 2 * nScale))
+            For j = 0 To UBound(udtItemsUpDownButton)
+                With udtItemsUpDownButton(j)
+                    .RECT.Left = IIF(j Mod 2 = 0, udtItemsPicker(i).TitleMonthYear.RECT.Left, udtItemsPicker(i).TitleMonthYear.RECT.Left + (udtItemsPicker(i).TitleMonthYear.RECT.Width - (udtItemsPicker(i).TitleMonthYear.RECT.Width / 6) - 2 * nScale))
                     .RECT.Top = udtItemsPicker(i).TitleMonthYear.RECT.Top
                     .RECT.Width = (udtItemsPicker(i).TitleMonthYear.RECT.Width / 6)
                     .RECT.Height = udtItemsPicker(i).TitleMonthYear.RECT.Height
