@@ -19,3 +19,5 @@ In the project, a control called ucText created by Leandro Ascierto has been use
   - New properties added.
     - **ShowTodayButton:** to enable the current day button when AutoApply is True.
     - **DayHotColor:** To control the color that will be displayed when the mouse is over someday.
+**08/11/2022:**
+  - Updated a bug in the use of FirstDayOfWeek.
