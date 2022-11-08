@@ -62,7 +62,6 @@ Private Declare Function TlsGetValue Lib "kernel32" (ByVal dwTlsIndex As Long) A
 Private Declare Function TlsSetValue Lib "kernel32" (ByVal dwTlsIndex As Long, ByVal lpTlsValue As Long) As Long
 Private Declare Function TlsFree Lib "kernel32" (ByVal dwTlsIndex As Long) As Long
 Private Declare Function TlsAlloc Lib "kernel32" () As Long
-Private Declare Function GetLocaleInfo Lib "kernel32" Alias "GetLocaleInfoW" (ByVal Locale As Long, ByVal LCType As Long, ByVal lpLCData As Long, ByVal cchData As Long) As Long
 '---> OLEAUT32 (Oleaut32)
 Private Declare Function OleTranslateColor Lib "Oleaut32" (ByVal lOleColor As Long, ByVal lHPalette As Long, ByVal lColorRef As Long) As Long
 '---> OLEPRO32 (Olepro32)
@@ -142,55 +141,6 @@ Private Declare Function GdipCreatePen1 Lib "gdiplus" (ByVal mColor As Long, ByV
 Private Declare Function GdipCreatePen2 Lib "gdiplus" (ByVal mBrush As Long, ByVal mWidth As Single, ByVal mUnit As Long, ByRef mPen As Long) As Long
 Private Declare Function GdipDeletePen Lib "gdiplus" (ByVal mPen As Long) As Long
 Private Declare Function GdipDeleteBrush Lib "gdiplus" (ByVal Brush As Long) As Long
-
-'--> Constantes
-Private Const cs_CarNumeros             As String = "0123456789"
-Private Const cs_ColsDay                As Integer = 7
-Private Const cs_RowsPicker             As Integer = 7
-Private Const cs_ColsMonthYear          As Integer = 4
-Private Const cs_RowsMonthYear          As Integer = 3
-Private Const cs_ItemsDay               As Integer = cs_ColsDay * (cs_RowsPicker - 1)
-'--
-Private Const SORT_DEFAULT              As Long = &H0& 'sorting default
-Private Const LANG_NEUTRAL              As Long = &H0&
-Private Const LANG_INVARIANT            As Long = &H7F&
-Private Const SUBLANG_NEUTRAL           As Long = &H0&  'language neutral
-Private Const SUBLANG_DEFAULT           As Long = &H1&  'user default
-Private Const SUBLANG_SYS_DEFAULT       As Long = &H2&  'system default
-Private Const LANG_SYSTEM_DEFAULT       As Long = LANG_NEUTRAL Or SUBLANG_SYS_DEFAULT * &H400&
-Private Const LANG_USER_DEFAULT         As Long = LANG_NEUTRAL Or SUBLANG_DEFAULT * &H400&
-'--
-Private Const TME_LEAVE                 As Long = &H2&
-Private Const UnitPixel                 As Long = &H2&
-Private Const SmoothingModeAntiAlias    As Long = 4
-Private Const TLS_MINIMUM_AVAILABLE     As Long = 64
-Private Const LOGPIXELSX                As Long = 88
-Private Const LOGPIXELSY                As Long = 90
-Private Const CombineModeExclude        As Long = &H4
-Private Const IDC_HAND                  As Long = 32649
-Private Const WS_CHILD                  As Long = &H40000000
-Private Const WM_MOUSEMOVE              As Long = &H200
-Private Const PixelFormat32bppPARGB     As Long = &HE200B
-Private Const GWL_HWNDPARENT            As Long = -8
-Private Const HWND_TOPMOST              As Long = -1
-Private Const SWP_NOSIZE                As Long = &H1
-Private Const SWP_NOACTIVATE            As Long = &H10
-Private Const SWP_SHOWWINDOW            As Long = &H40
-'--
-Private Const DT_LEFT                   As Long = &H0
-Private Const DT_TOP                    As Long = &H0
-Private Const DT_RIGHT                  As Long = &H2
-Private Const DT_BOTTOM                 As Long = &H8
-Private Const DT_CENTER                 As Long = &H1
-Private Const DT_VCENTER                As Long = &H4
-Private Const DT_WORDBREAK              As Long = &H10
-Private Const DT_SINGLELINE             As Long = &H20
-Private Const DT_CALCRECT               As Long = &H400
-'--
-Private Const WM_HOTKEY                 As Long = &H312
-Private Const WM_MOUSELEAVE             As Long = &H2A3&
-Private Const WM_CHAR                   As Long = &H102
-Private Const WM_IME_SETCONTEXT         As Long = &H281&
 
 '--> Tipos definidos por usuario.
 Private Type GDIPlusStartupInput
@@ -518,48 +468,6 @@ Private Enum HatchStyle
     HatchStyleMax = &H34
 End Enum
 
-Public Enum LCIDs
-    'Add more as you need them here:
-    LOCALE_SYSTEM_DEFAULT = LANG_SYSTEM_DEFAULT Or SORT_DEFAULT * &H10000
-    LOCALE_USER_DEFAULT = LANG_USER_DEFAULT Or SORT_DEFAULT * &H10000
-    LOCALE_NEUTRAL = (LANG_NEUTRAL Or SUBLANG_NEUTRAL * &H400&) Or SORT_DEFAULT * &H10000
-    LOCALE_INVARIANT = (LANG_INVARIANT Or SUBLANG_NEUTRAL * &H400&) Or SORT_DEFAULT * &H10000
-
-    LOCALE_ENUK = &H809&
-    LOCALE_ENUS = &H409&
-    LOCALE_DEDE = &H407& 'German, Germany.
-End Enum
-
-Public Enum enmLocaleTypes
-    LOCALE_NOUSEROVERRIDE = &H80000000          'do not use user overrides
-    LOCALE_USE_CP_ACP = &H40000000              'use the system ACP
-    LOCALE_RETURN_NUMBER = &H20000000           'return number instead of string
-    LOCALE_ILANGUAGE = &H1&                     'language id
-    LOCALE_SLANGUAGE = &H2&                     'localized name of language
-    LOCALE_SENGLANGUAGE = &H1001&               'English name of language
-    LOCALE_SABBREVLANGNAME = &H3&               'abbreviated language name
-    LOCALE_SNATIVELANGNAME = &H4&               'native name of language
-    
-    LOCALE_SDATE = &H1D&                        'date separator (derived from LOCALE_SSHORTDATE, use that instead)
-    LOCALE_STIME = &H1E&                        'time separator (derived from LOCALE_STIMEFORMAT, use that instead)
-    LOCALE_SSHORTDATE = &H1F&                   'short date format string
-    LOCALE_SLONGDATE = &H20&                    'long date format string
-    LOCALE_STIMEFORMAT = &H1003&                'time format string
-    LOCALE_IDATE = &H21&                        'short date format ordering (derived from LOCALE_SSHORTDATE, use that instead)
-    LOCALE_ILDATE = &H22&                       'long date format ordering (derived from LOCALE_SLONGDATE, use that instead)
-    LOCALE_ITIME = &H23&                        'time format specifier (derived from LOCALE_STIMEFORMAT, use that instead)
-    LOCALE_ITIMEMARKPOSN = &H1005&              'time marker position (derived from LOCALE_STIMEFORMAT, use that instead)
-    LOCALE_ICENTURY = &H24&                     'century format specifier (short date, LOCALE_SSHORTDATE is preferred)
-    LOCALE_ITLZERO = &H25&                      'leading zeros in time field (derived from LOCALE_STIMEFORMAT, use that instead)
-    LOCALE_IDAYLZERO = &H26&                    'leading zeros in day field (short date, LOCALE_SSHORTDATE is preferred)
-    LOCALE_IMONLZERO = &H27&                    'leading zeros in month field (short date, LOCALE_SSHORTDATE is preferred)
-    LOCALE_S1159 = &H28&                        'AM designator
-    LOCALE_S2359 = &H29&                        'PM designator
-    
-    LOCALE_IFIRSTDAYOFWEEK = &H100C&            'first day of week specifier
-    LOCALE_IFIRSTWEEKOFYEAR = &H100D&           'first week of year specifier
-End Enum
-
 '---> Publicos:
 Public Enum enmCallOutPosition
     [Position Left]
@@ -608,14 +516,54 @@ Public Enum enmButtonAction
 End Enum
 
 Public Enum enmFirstDayOfWeek
+    DaySunday = 1   'Domingo.
     DayMonday       'Lunes.
     DayTuesday      'Martes.
     DayWednesday    'Miercoles.
     DayThursday     'Jueves.
     DayFriday       'Viernes.
     DaySaturday     'Sábado.
-    DaySunday       'Domingo.
 End Enum
+
+'--> Constantes
+Private Const cs_CarNumeros             As String = "0123456789"
+Private Const cs_ColsDay                As Integer = 7
+Private Const cs_RowsPicker             As Integer = 7
+Private Const cs_ColsMonthYear          As Integer = 4
+Private Const cs_RowsMonthYear          As Integer = 3
+Private Const cs_ItemsDay               As Integer = cs_ColsDay * (cs_RowsPicker - 1)
+'--
+Private Const TME_LEAVE                 As Long = &H2&
+Private Const UnitPixel                 As Long = &H2&
+Private Const SmoothingModeAntiAlias    As Long = 4
+Private Const TLS_MINIMUM_AVAILABLE     As Long = 64
+Private Const LOGPIXELSX                As Long = 88
+Private Const LOGPIXELSY                As Long = 90
+Private Const CombineModeExclude        As Long = &H4
+Private Const IDC_HAND                  As Long = 32649
+Private Const WS_CHILD                  As Long = &H40000000
+Private Const WM_MOUSEMOVE              As Long = &H200
+Private Const PixelFormat32bppPARGB     As Long = &HE200B
+Private Const GWL_HWNDPARENT            As Long = -8
+Private Const HWND_TOPMOST              As Long = -1
+Private Const SWP_NOSIZE                As Long = &H1
+Private Const SWP_NOACTIVATE            As Long = &H10
+Private Const SWP_SHOWWINDOW            As Long = &H40
+'--
+Private Const DT_LEFT                   As Long = &H0
+Private Const DT_TOP                    As Long = &H0
+Private Const DT_RIGHT                  As Long = &H2
+Private Const DT_BOTTOM                 As Long = &H8
+Private Const DT_CENTER                 As Long = &H1
+Private Const DT_VCENTER                As Long = &H4
+Private Const DT_WORDBREAK              As Long = &H10
+Private Const DT_SINGLELINE             As Long = &H20
+Private Const DT_CALCRECT               As Long = &H400
+'--
+Private Const WM_HOTKEY         As Long = &H312
+Private Const WM_MOUSELEAVE     As Long = &H2A3&
+Private Const WM_CHAR           As Long = &H102
+Private Const WM_IME_SETCONTEXT As Long = &H281&
 
 '--> Variables locales:
 Dim nScale                              As Single
@@ -807,15 +755,12 @@ Private m_CallOutPosition               As enmCallOutPosition
 Private m_CallOutCustomPosPercent       As Long
 Private m_CallOutAlign                  As enmCallOutAlign
 
-Private m_SystemFirstDayOfWeek          As Long
-Private m_UserFirstDayOfWeek            As Long
-
 'Eventos del control
 Public Event DayPrePaint(ByVal dDate As Date, BackColor As Long)
 Public Event ChangeMinDate()
 Public Event ChangeMaxDate()
 Public Event ChangeDate(ByVal Value As Date)
-Public Event ChangeStarDate(ByVal Value As String)
+Public Event ChangeStartDate(ByVal Value As String)
 Public Event ChangeEndDate(ByVal Value As String)
 Public Event ButtonRangeClick(ByVal Index, Caption As String)
 Public Event ButtonActionClick(ByVal Index, Caption As String)
@@ -1374,7 +1319,7 @@ End Property
 Public Property Let FirstDayOfWeek(ByVal Value As enmFirstDayOfWeek)
     m_FirstDayOfWeek = Value
     PropertyChanged "FirstDayOfWeek"
-    If m_IsChild Then InitControl: Draw: Refresh
+    If m_IsChild Then Draw: Refresh
 End Property
 
 'm_CountFreeDays                 As Boolean
@@ -2268,8 +2213,6 @@ Private Sub UserControl_Initialize()
     Call GdiplusStartup(GdipToken, GdipStartupInput, ByVal 0)
     nScale = GetWindowsDPI
     '---
-    m_SystemFirstDayOfWeek = GetLocaleInfoAsLong(LOCALE_IFIRSTDAYOFWEEK)
-    '---
     Set c_SubClass = New clsSubClass
     Set c_CShadow = New clsShadow
     '---
@@ -2348,7 +2291,7 @@ Private Sub UserControl_InitProperties()
     m_MinDate = DateSerial(1601, 1, 1)
     m_MaxDate = DateSerial(9999, 12, 31)
     
-    m_FirstDayOfWeek = GetLocaleInfoAsLong(LOCALE_IFIRSTDAYOFWEEK)
+    m_FirstDayOfWeek = DaySunday
 
     m_CountFreeDays = True
     m_CountReservedDay = True
@@ -2485,11 +2428,11 @@ Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Sing
             If udtItemsPicker(.IndexCalendar).ViewNavigator <> ViewItemNavigatorDays Then
                 If PtInRect(.RECT2, X, Y) Then
                     If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
-                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
+                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) >= m_MinDate And DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) <= m_MaxDate
                     Else
-                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                        bTemp = .ValueItem >= Year(m_MinDate) And .ValueItem <= Year(m_MaxDate)
                     End If
-                    If Not bTemp Then
+                    If bTemp Then
                         .MouseState = Pressed
                         Call Draw ': Refresh
                     End If
@@ -2532,6 +2475,7 @@ End Sub
 
 Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
     Dim i, a As Integer
+    Dim J, k As Integer
     Dim ET As TRACKMOUSEEVENTTYPE
     Dim newRect As RECT
     Dim iTmpValue As Integer
@@ -2667,10 +2611,27 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
                                             ShowHandPointer True
                                             '--
                                             If IsDate(d_ValueStartTemp) Then
-                                                If (m_MaxRangeDays And DateDiff("d", d_ValueStartTemp, .DateValue, m_UserFirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
-                                                    If ((CDate(d_ValueStartTemp) <= .DateValue) And d_ValueEndTemp = "") Then
+                                                If (m_MaxRangeDays > 0 And DateDiff("d", CDate(d_ValueStartTemp), CDate(.DateValue), m_FirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
+                                                    If ((CDate(d_ValueStartTemp) <= CDate(.DateValue)) And d_ValueEndTemp = "") Then
                                                         c_IndexSelMove = i
                                                     End If
+                                                ElseIf m_MaxRangeDays > 0 And CDate(.DateValue) > DateAdd("d", m_MaxRangeDays - 1, CDate(d_ValueStartTemp)) Then
+                                                    For J = iCalendar To iCalendar
+                                                        With udtItemsPicker(J)
+                                                            If PtInRect(.RECT2, X, Y) Then
+                                                                For k = 0 To UBound(udtItemsDay)
+                                                                    With udtItemsDay(k)
+                                                                        If .DateValue = DateAdd("d", m_MaxRangeDays - 1, CDate(d_ValueStartTemp)) Then
+                                                                            c_IndexSelMove = k
+                                                                        End If
+                                                                    End With
+                                                                Next
+                                                            End If
+                                                        End With
+                                                    Next
+                                                End If
+                                                If (CDate(.DateValue) < CDate(d_ValueStartTemp)) Then
+                                                    c_IndexSelMove = -1
                                                 End If
                                             End If
                                             tmrMouseEvent.Interval = 2
@@ -2713,11 +2674,11 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
                             With udtItemsMonthYear(i)
                                 If PtInRect(.RECT2, X, Y) Then
                                     If udtItemsPicker(a).ViewNavigator = ViewItemNavigatorMonths Then
-                                        bTemp = DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) > m_MaxDate
+                                        bTemp = DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) >= m_MinDate And DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) <= m_MaxDate
                                     Else
-                                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                                        bTemp = .ValueItem >= Year(m_MinDate) And .ValueItem <= Year(m_MaxDate)
                                     End If
-                                    If Not bTemp Then
+                                    If bTemp Then
                                         If .MouseState = Normal Then
                                             .MouseState = IIF(Button = vbLeftButton, Pressed, Hot)
                                             '--
@@ -2948,14 +2909,16 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                             If .DateValue >= m_MinDate And .DateValue <= m_MaxDate Then
                                 If Len(d_ValueStartTemp) <= 0 Then
                                     d_ValueStartTemp = .DateValue
+                                    RaiseEvent ChangeStartDate(d_ValueStartTemp)
                                     '---
                                     If m_AutoApply Then
                                         udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
                                     End If
                                 Else
                                     If .DateValue >= CDate(d_ValueStartTemp) Then
-                                        If (m_MaxRangeDays And DateDiff("d", d_ValueStartTemp, .DateValue, m_UserFirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
+                                        If (m_MaxRangeDays And DateDiff("d", d_ValueStartTemp, .DateValue, m_FirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
                                             d_ValueEndTemp = .DateValue
+                                            RaiseEvent ChangeEndDate(d_ValueEndTemp)
                                             If m_AutoApply Then
                                                 udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
                                                 Call ApplyChangeValues
@@ -2993,11 +2956,11 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
             If udtItemsPicker(.IndexCalendar).ViewNavigator <> ViewItemNavigatorDays Then
                 If PtInRect(.RECT2, X, Y) Then
                     If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
-                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
+                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) >= m_MinDate And DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) <= m_MaxDate
                     Else
-                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                        bTemp = .ValueItem >= Year(m_MinDate) And .ValueItem <= Year(m_MaxDate)
                     End If
-                    If Not bTemp Then
+                    If bTemp Then
                         If .MouseState = Pressed Then
                             .MouseState = Hot
                             '---
@@ -3058,7 +3021,7 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                     .MonthName = MonthName(Month(d_ValueTemp))
                                     If m_UseRangeValue Then
                                         .DateInPicker = DateSerial(.NumberYear, .NumberMonth, 1)
-                                        m_ValueStart = d_ValueTemp: d_ValueStartTemp = d_ValueTemp: RaiseEvent ChangeStarDate(d_ValueTemp)
+                                        m_ValueStart = d_ValueTemp: d_ValueStartTemp = d_ValueTemp: RaiseEvent ChangeStartDate(d_ValueTemp)
                                         m_ValueEnd = d_ValueTemp: d_ValueEndTemp = d_ValueTemp: RaiseEvent ChangeEndDate(d_ValueTemp)
                                     Else
                                         .DateInPicker = d_ValueTemp
@@ -3072,7 +3035,7 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                     Exit Sub
                                 Else
                                     ValueStart = ""
-                                    RaiseEvent ChangeStarDate("")
+                                    RaiseEvent ChangeStartDate("")
                                     ValueEnd = ""
                                     RaiseEvent ChangeEndDate("")
                                 End If
@@ -3147,7 +3110,7 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         
         m_MinDate = .ReadProperty("MinDate", DateSerial(1601, 1, 1))
         m_MaxDate = .ReadProperty("MaxDate", DateSerial(9999, 12, 31))
-        m_FirstDayOfWeek = .ReadProperty("FirstDayOfWeek", GetLocaleInfoAsLong(LOCALE_IFIRSTDAYOFWEEK))
+        m_FirstDayOfWeek = .ReadProperty("FirstDayOfWeek", DaySunday)
         
         m_CountFreeDays = .ReadProperty("CountFreeDays", True)
         m_CountReservedDay = .ReadProperty("CountReservedDay", True)
@@ -3365,7 +3328,7 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         Call .WriteProperty("MinDate", m_MinDate, DateSerial(1601, 1, 1))
         Call .WriteProperty("MaxDate", m_MaxDate, DateSerial(9999, 12, 31))
         
-        Call .WriteProperty("FirstDayOfWeek", m_FirstDayOfWeek, GetLocaleInfoAsLong(LOCALE_IFIRSTDAYOFWEEK))
+        Call .WriteProperty("FirstDayOfWeek", m_FirstDayOfWeek, DaySunday)
         
         Call .WriteProperty("CountFreeDays", m_CountFreeDays, True)
         Call .WriteProperty("CountReservedDay", m_CountReservedDay, True)
@@ -3599,10 +3562,6 @@ Private Sub InitControl()
     
     'udtItemsDay (1 picker: 42 items(0 to 41))
     ReDim udtItemsDay((cs_ItemsDay * m_NumberPickers) - 1) As udtItemDayCalendar
-    
-    m_UserFirstDayOfWeek = IIF(m_FirstDayOfWeek <> m_SystemFirstDayOfWeek, m_FirstDayOfWeek, m_SystemFirstDayOfWeek)
-    m_UserFirstDayOfWeek = IIF(m_UserFirstDayOfWeek = 6, 1, m_UserFirstDayOfWeek + 2)
-    
     '--
     PaddingX = m_PaddingX
     PaddingY = m_PaddingY
@@ -3774,7 +3733,7 @@ Private Sub InitControl()
                 .RECT.Top = (udtItemsPicker(i).TitleMonthYear.RECT.Top + udtItemsPicker(i).TitleMonthYear.RECT.Height) + PaddingY
                 .RECT.Width = m_DayWidth
                 .RECT.Height = m_DayHeight
-                .DayName = StrConv(WeekdayName(Weekday((a Mod cs_ColsDay) + m_UserFirstDayOfWeek, vbSunday), False, vbSunday), vbProperCase)
+                .DayName = StrConv(WeekdayName(Weekday((a Mod cs_ColsDay) + m_FirstDayOfWeek)), vbProperCase)
                 .Caption = Left(.DayName, 2)
                 .IndexCalendar = i
             End With
@@ -4132,7 +4091,7 @@ Private Sub Draw()
     For i = 0 To UBound(udtItemsPicker)
         'For a = 0 To UBound(udtItemsDay)
         dDate = DateSerial(udtItemsPicker(i).NumberYear, udtItemsPicker(i).NumberMonth, 1)
-        FirtsDay = Weekday(dDate, m_UserFirstDayOfWeek)
+        FirtsDay = Weekday(dDate, m_FirstDayOfWeek)
         If udtItemsPicker(i).ViewNavigator = ViewItemNavigatorDays Then
             '---
             For a = (cs_ItemsDay * i) To (cs_ItemsDay * (i + 1)) - 1
@@ -4146,7 +4105,7 @@ Private Sub Draw()
                     .DatePartYear = Year(.DateValue)
                     '--
                     .Caption = .DatePartDay
-                    .NumberWeek = DatePart("ww", curDate, IIF(m_ShowUseISOWeek, vbMonday, m_UserFirstDayOfWeek), IIF(m_ShowUseISOWeek, vbFirstFourDays, vbUseSystem))
+                    .NumberWeek = DatePart("ww", curDate, IIF(m_ShowUseISOWeek, vbMonday, m_FirstDayOfWeek), IIF(m_ShowUseISOWeek, vbFirstFourDays, vbUseSystem))
                     '--
                     IsLock = .DateValue < m_MinDate Or .DateValue > m_MaxDate
                     .IsDayInMonthCurrent = Month(dDate) = .DatePartMonth
@@ -4575,7 +4534,7 @@ Private Function ApplyChangeValues() As Boolean
     If m_UseRangeValue Then
         If IsDate(d_ValueStartTemp) Then
             m_ValueStart = d_ValueStartTemp
-            RaiseEvent ChangeStarDate(m_ValueStart)
+            RaiseEvent ChangeStartDate(m_ValueStart)
         End If
         
         If IsDate(d_ValueEndTemp) Then
@@ -4860,33 +4819,6 @@ Private Function GdiPlusGetMeasureString(ByVal hGraphics As Long, ByVal Text As 
     GdipDeleteFont hFont
     GdipDeleteFontFamily hFontFamily
     '---
-End Function
-
-Public Function GetLocaleInfoAsLong(ByVal Index As enmLocaleTypes, Optional ByVal Locale As LCIDs = LOCALE_USER_DEFAULT) As Long
-    Dim TChars As Long
-
-    Index = Index Or LOCALE_RETURN_NUMBER
-    TChars = GetLocaleInfo(Locale, Index, 0, 0)
-    If TChars Then
-        If TChars = 2 Then
-            GetLocaleInfo Locale, Index, VarPtr(GetLocaleInfoAsLong), TChars
-        Else
-            Err.Raise &H80049900, , "Index is not a Long LocaleInfo"
-        End If
-    Else
-        Err.Raise &H80049904, , "GetLocaleInfo error " & CStr(Err.LastDllError)
-    End If
-End Function
-
-Public Function GetLocaleInfoAsString(ByVal Index As enmLocaleTypes, Optional ByVal Locale As LCIDs = LOCALE_USER_DEFAULT) As String
-    Dim TChars As Long
-    TChars = GetLocaleInfo(Locale, Index, 0, 0)
-    If TChars Then
-        GetLocaleInfoAsString = Space$(TChars - 1)
-        GetLocaleInfo Locale, Index, StrPtr(GetLocaleInfoAsString), TChars
-    Else
-        Err.Raise &H80049908, , "GetLocaleInfo error " & CStr(Err.LastDllError)
-    End If
 End Function
 
 '-> Publicas

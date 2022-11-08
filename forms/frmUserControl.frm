@@ -50,6 +50,7 @@ Begin VB.Form frmUserControl
       Value           =   44866
       MinDate         =   44562
       MaxDate         =   44926
+      FirstDayOfWeek  =   2
       ButtonNavCornerRadius=   12
       BeginProperty ButtonNavIcoFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
          Name            =   "MS Sans Serif"
@@ -296,11 +297,12 @@ Begin VB.Form frmUserControl
       ShadowSize      =   2
       ShadowOpacity   =   10
       SpaceGrid       =   1
-      AutoApply       =   0   'False
+      ShowTodayButton =   -1  'True
       BackColorParent =   -2147483633
       ColsPicker      =   1
       NumberPickers   =   1
       Value           =   44562
+      FirstDayOfWeek  =   2
       ButtonNavCornerRadius=   12
       BeginProperty ButtonNavIcoFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
          Name            =   "MS Sans Serif"
@@ -470,21 +472,21 @@ Private Sub chkProperties_Click(Index As Integer)
 End Sub
 
 Private Sub Combo1_Click()
-    ucJLDTPicker.FirstDayOfWeek = Combo1.ListIndex
+    ucJLDTPicker.FirstDayOfWeek = Combo1.ListIndex + 1
 End Sub
 
 Private Sub Form_Load()
     ucTextValue(0).Text = ucJLDTPicker.MinDate
     ucTextValue(1).Text = ucJLDTPicker.MaxDate
     With Combo1
+        .AddItem "Domingo"
         .AddItem "Lunes"
         .AddItem "Martes"
         .AddItem "Miercoles"
         .AddItem "Jueves"
         .AddItem "Viernes"
         .AddItem "Sábado"
-        .AddItem "Domingo"
-        .ListIndex = 6
+        .ListIndex = 0
     End With
     '---
     ucTxtProperties(0).Text = ucJLDTPicker.ColsPicker
@@ -499,12 +501,20 @@ Private Sub ucJLDTPicker_ButtonRangeClick(ByVal Index As Variant, Caption As Str
     MsgBox "Button Index(" & Index & "): " & Caption
 End Sub
 
+Private Sub ucJLDTPicker_ChangeEndDate(ByVal Value As String)
+    Debug.Print "EndDate:" & Value
+End Sub
+
 Private Sub ucJLDTPicker_ChangeMaxDate()
     ucTextValue(1).Text = ucJLDTPicker.MaxDate
 End Sub
 
 Private Sub ucJLDTPicker_ChangeMinDate()
     ucTextValue(0).Text = ucJLDTPicker.MinDate
+End Sub
+
+Private Sub ucJLDTPicker_ChangeStartDate(ByVal Value As String)
+    Debug.Print "StartDate:" & Value
 End Sub
 
 Private Sub ucJLDTPicker_DayPrePaint(ByVal dDate As Date, BackColor As Long)
