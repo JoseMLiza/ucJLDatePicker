@@ -2,16 +2,15 @@ VERSION 5.00
 Begin VB.Form frmUserControl 
    BorderStyle     =   4  'Fixed ToolWindow
    Caption         =   "ucJLPicker"
-   ClientHeight    =   4215
+   ClientHeight    =   4245
    ClientLeft      =   45
    ClientTop       =   390
    ClientWidth     =   9105
    Icon            =   "frmUserControl.frx":0000
    LinkTopic       =   "Form1"
-   LockControls    =   -1  'True
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   ScaleHeight     =   4215
+   ScaleHeight     =   4245
    ScaleWidth      =   9105
    ShowInTaskbar   =   0   'False
    StartUpPosition =   2  'CenterScreen
@@ -22,7 +21,7 @@ Begin VB.Form frmUserControl
       Left            =   120
       TabIndex        =   13
       Top             =   3600
-      Width           =   1575
+      Width           =   1815
    End
    Begin Proyecto1.ucJLDTPicker ucJLDTPicker 
       Height          =   3960
@@ -50,7 +49,6 @@ Begin VB.Form frmUserControl
       Value           =   44866
       MinDate         =   44562
       MaxDate         =   44926
-      FirstDayOfWeek  =   2
       ButtonNavCornerRadius=   12
       BeginProperty ButtonNavIcoFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
          Name            =   "MS Sans Serif"
@@ -120,7 +118,7 @@ Begin VB.Form frmUserControl
       Left            =   120
       TabIndex        =   12
       Top             =   2880
-      Width           =   1215
+      Width           =   1815
    End
    Begin Proyecto1.ucText ucTxtProperties 
       Height          =   345
@@ -157,7 +155,7 @@ Begin VB.Form frmUserControl
       Left            =   120
       TabIndex        =   7
       Top             =   3360
-      Width           =   1215
+      Width           =   1815
    End
    Begin VB.ComboBox Combo1 
       Height          =   315
@@ -174,7 +172,7 @@ Begin VB.Form frmUserControl
       Left            =   120
       TabIndex        =   4
       Top             =   3120
-      Width           =   1215
+      Width           =   1815
    End
    Begin Proyecto1.ucText ucTextValue 
       Height          =   315
@@ -211,7 +209,7 @@ Begin VB.Form frmUserControl
       TabIndex        =   2
       Top             =   2640
       Value           =   1  'Checked
-      Width           =   1215
+      Width           =   1815
    End
    Begin VB.CheckBox chkProperties 
       Caption         =   "LinkedCalendar"
@@ -221,7 +219,7 @@ Begin VB.Form frmUserControl
       TabIndex        =   0
       Top             =   2400
       Value           =   1  'Checked
-      Width           =   1455
+      Width           =   1815
    End
    Begin Proyecto1.ucText ucTxtProperties 
       Height          =   345
@@ -280,7 +278,7 @@ Begin VB.Form frmUserControl
    End
    Begin Proyecto1.ucJLDTPicker ucJLDTPicker1 
       Height          =   480
-      Left            =   1680
+      Left            =   1920
       TabIndex        =   17
       Top             =   2880
       Visible         =   0   'False
@@ -297,12 +295,11 @@ Begin VB.Form frmUserControl
       ShadowSize      =   2
       ShadowOpacity   =   10
       SpaceGrid       =   1
-      ShowTodayButton =   -1  'True
+      AutoApply       =   0   'False
       BackColorParent =   -2147483633
       ColsPicker      =   1
       NumberPickers   =   1
       Value           =   44562
-      FirstDayOfWeek  =   2
       ButtonNavCornerRadius=   12
       BeginProperty ButtonNavIcoFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
          Name            =   "MS Sans Serif"
@@ -442,6 +439,8 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+Option Explicit
+
 Private Declare Function GetWindowRect Lib "user32.dll" (ByVal hWnd As Long, ByRef lpRect As RECT) As Long
 
 Private Type RECT
@@ -472,20 +471,21 @@ Private Sub chkProperties_Click(Index As Integer)
 End Sub
 
 Private Sub Combo1_Click()
-    ucJLDTPicker.FirstDayOfWeek = Combo1.ListIndex + 1
+    ucJLDTPicker.FirstDayOfWeek = Combo1.ListIndex
 End Sub
 
 Private Sub Form_Load()
     ucTextValue(0).Text = ucJLDTPicker.MinDate
     ucTextValue(1).Text = ucJLDTPicker.MaxDate
     With Combo1
-        .AddItem "Domingo"
-        .AddItem "Lunes"
-        .AddItem "Martes"
-        .AddItem "Miercoles"
-        .AddItem "Jueves"
-        .AddItem "Viernes"
-        .AddItem "Sábado"
+        .AddItem "Use Of System"
+        .AddItem "Sunday [Domingo]"
+        .AddItem "Monday [Lunes]"
+        .AddItem "Tuesday [Martes]"
+        .AddItem "Wednesday [Miercoles]"
+        .AddItem "Thursday [Jueves]"
+        .AddItem "Friday [Viernes]"
+        .AddItem "Saturday [Sábado]"
         .ListIndex = 0
     End With
     '---
@@ -502,7 +502,8 @@ Private Sub ucJLDTPicker_ButtonRangeClick(ByVal Index As Variant, Caption As Str
 End Sub
 
 Private Sub ucJLDTPicker_ChangeEndDate(ByVal Value As String)
-    Debug.Print "EndDate:" & Value
+    Debug.Print "ValueEnd = " & Value
+    Debug.Print "Selection days = " & ucJLDTPicker.DaySelCount
 End Sub
 
 Private Sub ucJLDTPicker_ChangeMaxDate()
@@ -514,24 +515,12 @@ Private Sub ucJLDTPicker_ChangeMinDate()
 End Sub
 
 Private Sub ucJLDTPicker_ChangeStartDate(ByVal Value As String)
-    Debug.Print "StartDate:" & Value
+    Debug.Print "ValueStart = " & Value
 End Sub
 
 Private Sub ucJLDTPicker_DayPrePaint(ByVal dDate As Date, BackColor As Long)
     If dDate >= CDate("25/02/2022") And dDate <= CDate("15/03/2022") Then BackColor = &H99B418
     If dDate = CDate("27/02/2022") Then BackColor = &H94D9FF
-End Sub
-
-Private Sub ucText1_ImgRightMouseUp(Button As Variant, Shift As Integer, X As Single, Y As Single)
-    Dim RECT As RECT
-    If Not ucJLDTPicker.IsChild Then
-        GetWindowRect ucText1.hWnd, RECT
-        ucJLDTPicker.Visible = False
-        ucJLDTPicker.Visible = True
-        ucJLDTPicker.ShowCalendar RECT.Left, RECT.Bottom
-        
-        ucJLDTPicker.Value = CDate(ucText1.Text)
-    End If
 End Sub
 
 Private Sub ucText1_KeyDown(KeyCode As Integer, Shift As Integer)
