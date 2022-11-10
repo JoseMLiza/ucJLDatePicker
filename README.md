@@ -22,3 +22,21 @@ In the project, a control called ucText created by Leandro Ascierto has been use
 
 **08/11/2022:**
   - Updated a bug in the use of FirstDayOfWeek.
+
+**10/11/2022:**
+  - Changed properties:
+    - DayFreeForeColor To **DayHolidayForeColor**
+
+  - Added properties:
+    - ✔️ **DayHolidayBackColor**
+    - ✔️ **DayReservedBackColor**
+
+  - Removed properties:
+    - ❌ DayOverBackColor
+    - ❌ DayOverForeColor
+  
+  - New procedure:
+    - **SetDaysRaservedAndHoliday:** Allows you to define the reserved days and holidays for subsequent counting among the selected ranges, to do this use the **CountFreeDay** or **CountReservedDay** properties, you can obtain the number of days selected with the **DaySelCount** output property.
+
+  - New behavior:
+    - Added the possibility of expanding an already selected range, you just have to right click on the end date and you can expand to the new date you need.
