@@ -2,25 +2,44 @@ VERSION 5.00
 Begin VB.Form frmUserControl 
    BorderStyle     =   4  'Fixed ToolWindow
    Caption         =   "ucJLPicker"
-   ClientHeight    =   4245
+   ClientHeight    =   4260
    ClientLeft      =   45
    ClientTop       =   390
    ClientWidth     =   9105
    Icon            =   "frmUserControl.frx":0000
    LinkTopic       =   "Form1"
+   LockControls    =   -1  'True
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   ScaleHeight     =   4245
+   ScaleHeight     =   4260
    ScaleWidth      =   9105
    ShowInTaskbar   =   0   'False
    StartUpPosition =   2  'CenterScreen
+   Begin VB.TextBox Text1 
+      Height          =   330
+      Left            =   135
+      TabIndex        =   19
+      Text            =   "00/00/0000"
+      Top             =   3870
+      Visible         =   0   'False
+      Width           =   975
+   End
+   Begin VB.CommandButton Command1 
+      Caption         =   "Add"
+      Height          =   330
+      Left            =   1095
+      TabIndex        =   18
+      Top             =   3870
+      Visible         =   0   'False
+      Width           =   975
+   End
    Begin VB.CheckBox chkProperties 
       Caption         =   "UseGDIPString"
       Height          =   255
       Index           =   6
-      Left            =   120
+      Left            =   135
       TabIndex        =   13
-      Top             =   3600
+      Top             =   3510
       Width           =   1815
    End
    Begin Proyecto1.ucJLDTPicker ucJLDTPicker 
@@ -68,7 +87,6 @@ Begin VB.Form frmUserControl
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      MonthYearBackColor=   -2147483643
       MonthYearBorderWidth=   1
       MonthYearCornerRadius=   5
       BeginProperty MonthYearFont {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
@@ -102,10 +120,10 @@ Begin VB.Form frmUserControl
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      DayFreeArray    =   ""
       DayNowShow      =   -1  'True
       DayNowBorderWidth=   1
       DayNowBorderColor=   11562240
+      DayReservedForeColor=   49152
       DaySaturdayForeColor=   0
       DaySundayForeColor=   192
       CallOutAlign    =   3
@@ -115,9 +133,9 @@ Begin VB.Form frmUserControl
       Caption         =   "ShowRange"
       Height          =   255
       Index           =   3
-      Left            =   120
+      Left            =   135
       TabIndex        =   12
-      Top             =   2880
+      Top             =   2790
       Width           =   1815
    End
    Begin Proyecto1.ucText ucTxtProperties 
@@ -152,9 +170,9 @@ Begin VB.Form frmUserControl
       Caption         =   "AutoApply"
       Height          =   255
       Index           =   5
-      Left            =   120
+      Left            =   135
       TabIndex        =   7
-      Top             =   3360
+      Top             =   3270
       Width           =   1815
    End
    Begin VB.ComboBox Combo1 
@@ -169,9 +187,9 @@ Begin VB.Form frmUserControl
       Caption         =   "RightToLeft"
       Height          =   255
       Index           =   4
-      Left            =   120
+      Left            =   135
       TabIndex        =   4
-      Top             =   3120
+      Top             =   3030
       Width           =   1815
    End
    Begin Proyecto1.ucText ucTextValue 
@@ -205,9 +223,9 @@ Begin VB.Form frmUserControl
       Caption         =   "Use Range"
       Height          =   255
       Index           =   2
-      Left            =   120
+      Left            =   135
       TabIndex        =   2
-      Top             =   2640
+      Top             =   2550
       Value           =   1  'Checked
       Width           =   1815
    End
@@ -215,9 +233,9 @@ Begin VB.Form frmUserControl
       Caption         =   "LinkedCalendar"
       Height          =   255
       Index           =   1
-      Left            =   120
+      Left            =   135
       TabIndex        =   0
-      Top             =   2400
+      Top             =   2310
       Value           =   1  'Checked
       Width           =   1815
    End
@@ -295,7 +313,7 @@ Begin VB.Form frmUserControl
       ShadowSize      =   2
       ShadowOpacity   =   10
       SpaceGrid       =   1
-      AutoApply       =   0   'False
+      ShowTodayButton =   -1  'True
       BackColorParent =   -2147483633
       ColsPicker      =   1
       NumberPickers   =   1
@@ -352,7 +370,6 @@ Begin VB.Form frmUserControl
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      DayFreeArray    =   ""
       DayNowShow      =   -1  'True
       DayNowBorderWidth=   1
       DayNowBorderColor=   11562240
@@ -472,6 +489,15 @@ End Sub
 
 Private Sub Combo1_Click()
     ucJLDTPicker.FirstDayOfWeek = Combo1.ListIndex
+End Sub
+
+Private Sub Command1_Click()
+    If IsDate(Text1) Then
+        'Para agregar reservas
+        'ucJLDTPicker.SetDaysRaservedAndFree CDate(Text1), TypeDayReserved
+        'Para agregar días Feriados
+        ucJLDTPicker.SetDaysRaservedAndHoliday CDate(Text1), TypeDayFree
+    End If
 End Sub
 
 Private Sub Form_Load()

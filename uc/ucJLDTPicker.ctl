@@ -335,6 +335,12 @@ Private Type udtItemDayCalendar
     MouseState                          As enmMouseState
 End Type
 
+'--> Items de los días reservados y feriados.
+Private Type udtItemDayReservedAndHoliday
+    DateValue                           As String
+    TypeDay                             As enmTypeDay
+End Type
+
 '--> Items de las horas, minutos y segundos del timePicker.
 Private Type udtItemHourMinSecDay
     RECT                                As RECTL
@@ -561,6 +567,13 @@ Private Enum enmLocaleTypes
 End Enum
 
 '---> Publicos:
+
+Public Enum enmTypeDay
+    TypeDayNormal
+    TypeDayReserved
+    TypeDayFree
+End Enum
+
 Public Enum enmCallOutPosition
     [Position Left]
     [Position Top]
@@ -612,7 +625,6 @@ Dim nScale                              As Single
 Dim hImgShadow                          As Long
 Dim GdipToken                           As Long
 Dim iCalendar                           As Integer
-'Dim hFontCollection                     As Long
 '--
 Dim c_PT                                As POINTAPI
 Dim c_hWnd                              As Long
@@ -634,6 +646,8 @@ Dim udtItemsActionButton(2)             As udtItemCalendarButton    'Para botone
 Dim udtItemsHeaderDay()                 As udtItemHeaderDay
 Dim udtItemsWeek()                      As udtItemWeek
 Dim udtItemsDay()                       As udtItemDayCalendar
+'-- Dias para rangos y feriados
+Dim udtItemsDayReservedAndHoliday()        As udtItemDayReservedAndHoliday
 '--
 Dim c_EnBoton                           As Boolean
 Dim c_IndexSelMove                      As Integer
@@ -646,6 +660,8 @@ Dim c_CShadow                           As clsShadow
 Dim b_ShowFastNavigator                 As Boolean
 '--
 Dim d_ValueTemp                         As Date
+Dim d_ValueTempStart                    As String
+Dim d_ValueTempEnd                      As String
 '--
 
 '--> Propiedades:
@@ -696,7 +712,7 @@ Private m_ValueEnd                      As String
 Private m_MinDate                       As Date
 Private m_MaxDate                       As Date
 Private m_FirstDayOfWeek                As VbDayOfWeek
-Private m_CountFreeDays                 As Boolean
+Private m_CountFreeDay                  As Boolean
 Private m_CountReservedDay              As Boolean
 Private m_CountSelDays                  As Integer
 Private m_SinglePicker                  As Boolean
@@ -762,26 +778,24 @@ Private m_DayHeaderFontBold             As Boolean
 Private m_DayHeaderForeColor            As OLE_COLOR
 Private m_DayHotColor                   As OLE_COLOR
 Private m_DayOMForeColor                As OLE_COLOR
-Private m_DayFreeArray                  As Variant
-Private m_DayFreeForeColor              As OLE_COLOR
+Private m_DayHolidayBackColor           As OLE_COLOR
+Private m_DayHolidayForeColor           As OLE_COLOR
 Private m_DayNowShow                    As Boolean
 Private m_DayNowBorderWidth             As Integer
 Private m_DayNowBorderColor             As OLE_COLOR
 Private m_DayNowBackColor               As OLE_COLOR
 Private m_DayNowForeColor               As OLE_COLOR
+Private m_DayReservedBackColor          As OLE_COLOR
+Private m_DayReservedForeColor          As OLE_COLOR
 Private m_DaysPrePaintCount             As Long
 Private m_DaySelCount                   As Long
-
-'Mouse event (Los días no tendran color para el mousedown)
-Private m_DayOverBackColor              As OLE_COLOR
-Private m_DayOverForeColor              As OLE_COLOR
 '--
 Private m_DaySelBetweenColor            As OLE_COLOR
 Private m_DaySelValuesColor             As OLE_COLOR
 Private m_DaySelForeColor               As OLE_COLOR
 Private m_DaySelFontBold                As Boolean
 Private m_DaySelectionStyle             As enmSelectionStyle
-'Private m_DayShowHotItem                As Boolean 'Siempre muestra el hot
+'--
 Private m_DaySaturdayForeColor          As OLE_COLOR
 Private m_DaySundayForeColor            As OLE_COLOR
 Private m_DayWidth                      As Long
@@ -797,6 +811,8 @@ Private m_CallOutCustomPosPercent       As Long
 Private m_CallOutAlign                  As enmCallOutAlign
 
 Private m_UserFirstDayOfWeek            As Long
+
+Private m_DaysReservedAndFree           As Long
 
 'Eventos del control
 Public Event DayPrePaint(ByVal dDate As Date, BackColor As Long)
@@ -1314,9 +1330,13 @@ End Property
 Public Property Let ValueStart(ByVal Value As String)
 On Error GoTo PropertyError
 '---
-    If CDate(m_ValueEnd) Then
-        If CDate(Value) > CDate(m_ValueEnd) Then
-            Err.Raise Number:="5000", Description:="Invalid start date, cannot be greater than the end date."
+    If Len(Trim(m_ValueEnd)) > 0 Then
+        If CDate(m_ValueEnd) Then
+            If Len(Trim(Value)) > 0 Then
+                If CDate(Value) > CDate(m_ValueEnd) Then
+                    Err.Raise Number:="5000", Description:="Invalid start date, cannot be greater than the end date."
+                End If
+            End If
         End If
     End If
     m_ValueStart = IIF(IsDate(Value), Value, "")
@@ -1337,9 +1357,13 @@ End Property
 Public Property Let ValueEnd(ByVal Value As String)
 On Error GoTo PropertyError
 '---
-    If CDate(m_ValueStart) Then
-        If CDate(Value) < CDate(m_ValueStart) Then
-            Err.Raise Number:="5000", Description:="Invalid end date, it cannot be less than the start date."
+    If Len(Trim(m_ValueStart)) > 0 Then
+        If CDate(m_ValueStart) Then
+            If Len(Trim(Value)) Then
+                If CDate(Value) < CDate(m_ValueStart) Then
+                    Err.Raise Number:="5000", Description:="Invalid end date, it cannot be less than the start date."
+                End If
+            End If
         End If
     End If
     m_ValueEnd = IIF(IsDate(Value), Value, "")
@@ -1391,13 +1415,13 @@ Public Property Let FirstDayOfWeek(ByVal Value As VbDayOfWeek)
     If m_IsChild Then InitControl: Draw: Refresh
 End Property
 
-'m_CountFreeDays                 As Boolean
-Public Property Get CountFreeDays() As Boolean
-    CountFreeDays = m_CountFreeDays
+'m_CountFreeDay                 As Boolean
+Public Property Get CountFreeDay() As Boolean
+    CountFreeDay = m_CountFreeDay
 End Property
-Public Property Let CountFreeDays(ByVal Value As Boolean)
-    m_CountFreeDays = Value
-    PropertyChanged "CountFreeDays"
+Public Property Let CountFreeDay(ByVal Value As Boolean)
+    m_CountFreeDay = Value
+    PropertyChanged "CountFreeDay"
     'Draw
     'Refresh
 End Property
@@ -1935,15 +1959,23 @@ Public Property Let DayOMForeColor(ByVal Value As OLE_COLOR)
     If m_IsChild Then Draw: Refresh
 End Property
 
-'m_DayFreeArray                  As Variant
-
-'m_DayFreeForeColor              As OLE_COLOR
-Public Property Get DayFreeForeColor() As OLE_COLOR
-    DayFreeForeColor = m_DayFreeForeColor
+'m_DayHolidayBackColor           As OLE_COLOR
+Public Property Get DayHolidayBackColor() As OLE_COLOR
+    DayHolidayBackColor = m_DayHolidayBackColor
 End Property
-Public Property Let DayFreeForeColor(ByVal Value As OLE_COLOR)
-    m_DayFreeForeColor = Value
-    PropertyChanged "DayFreeForeColor"
+Public Property Let DayHolidayBackColor(ByVal Value As OLE_COLOR)
+    m_DayHolidayBackColor = Value
+    PropertyChanged "DayHolidayBackColor"
+    If m_IsChild Then Draw: Refresh
+End Property
+
+'m_DayHolidayForeColor           As OLE_COLOR
+Public Property Get DayHolidayForeColor() As OLE_COLOR
+    DayHolidayForeColor = m_DayHolidayForeColor
+End Property
+Public Property Let DayHolidayForeColor(ByVal Value As OLE_COLOR)
+    m_DayHolidayForeColor = Value
+    PropertyChanged "DayHolidayForeColor"
     If m_IsChild Then Draw: Refresh
 End Property
 
@@ -1997,6 +2029,26 @@ Public Property Let DayNowForeColor(ByVal Value As OLE_COLOR)
     If m_IsChild Then Draw: Refresh
 End Property
 
+'m_DayReservedBackColor          As OLE_COLOR
+Public Property Get DayReservedBackColor() As OLE_COLOR
+    DayReservedBackColor = m_DayReservedBackColor
+End Property
+Public Property Let DayReservedBackColor(ByVal Value As OLE_COLOR)
+    m_DayReservedBackColor = Value
+    PropertyChanged "DayReservedBackColor"
+    If m_IsChild Then Draw: Refresh
+End Property
+
+'m_DayReservedForeColor          As OLE_COLOR
+Public Property Get DayReservedForeColor() As OLE_COLOR
+    DayReservedForeColor = m_DayReservedForeColor
+End Property
+Public Property Let DayReservedForeColor(ByVal Value As OLE_COLOR)
+    m_DayReservedForeColor = Value
+    PropertyChanged "DayReservedForeColor"
+    If m_IsChild Then Draw: Refresh
+End Property
+
 'm_DaysPrePaintCount             As Long
 Public Property Get DaysPrePaintCount() As Long
     DaysPrePaintCount = m_DaysPrePaintCount
@@ -2004,36 +2056,31 @@ End Property
 
 'm_DaySelCount                   As Long
 Public Property Get DaySelCount() As Long
+    Dim i, a    As Long
+    Dim iDays   As Long
+    Dim dDsct   As Long
+    Dim curDate As Date
+    '---
     If IsDate(m_ValueStart) And IsDate(m_ValueEnd) Then
-        m_DaySelCount = DateDiff("d", m_ValueStart, m_ValueEnd) + 1
+        iDays = DateDiff("d", m_ValueStart, m_ValueEnd) + 1
+        For i = 0 To iDays - 1
+            curDate = DateAdd("d", i, m_ValueStart)
+            If Not GetCountUdtDaysReservedFree < 0 Then
+                For a = 0 To UBound(udtItemsDayReservedAndHoliday)
+                    With udtItemsDayReservedAndHoliday(a)
+                        If Not m_CountFreeDay And CDate(.DateValue) = curDate And .TypeDay = TypeDayFree Then dDsct = dDsct + 1
+                        If Not m_CountReservedDay And CDate(.DateValue) = curDate And .TypeDay = TypeDayReserved Then dDsct = dDsct + 1
+                    End With
+                Next
+            End If
+        Next
+        m_DaySelCount = iDays - dDsct
     Else
         m_DaySelCount = 0
     End If
     DaySelCount = m_DaySelCount
 End Property
 
-'Mouse event (Los días no tendran color para el mousedown)
-'m_DayOverBackColor              As OLE_COLOR
-Public Property Get DayOverBackColor() As OLE_COLOR
-    DayOverBackColor = m_DayOverBackColor
-End Property
-Public Property Let DayOverBackColor(ByVal Value As OLE_COLOR)
-    m_DayOverBackColor = Value
-    PropertyChanged "DayOverBackColor"
-    If m_IsChild Then Draw: Refresh
-End Property
-
-'m_DayOverForeColor              As OLE_COLOR
-Public Property Get DayOverForeColor() As OLE_COLOR
-    DayOverForeColor = m_DayOverForeColor
-End Property
-Public Property Let DayOverForeColor(ByVal Value As OLE_COLOR)
-    m_DayOverForeColor = Value
-    PropertyChanged "DayOverForeColor"
-    If m_IsChild Then Draw: Refresh
-End Property
-
-'--
 'm_DaySelBetweenColor            As OLE_COLOR
 Public Property Get DaySelBetweenColor() As OLE_COLOR
     DaySelBetweenColor = m_DaySelBetweenColor
@@ -2043,17 +2090,6 @@ Public Property Let DaySelBetweenColor(ByVal Value As OLE_COLOR)
     PropertyChanged "DaySelBetweenColor"
     If m_IsChild Then Draw: Refresh
 End Property
-
-'m_DaySelEndColor                As OLE_COLOR
-'Public Property Get DaySelEndColor() As OLE_COLOR
-'    DaySelEndColor = m_DaySelEndColor
-'End Property
-'Public Property Let DaySelEndColor(ByVal Value As OLE_COLOR)
-'    m_DaySelEndColor = Value
-'    PropertyChanged "DaySelEndColor"
-'    Draw
-'    Refresh
-'End Property
 
 'm_DaySelValuesColor              As OLE_COLOR
 Public Property Get DaySelValuesColor() As OLE_COLOR
@@ -2094,16 +2130,6 @@ Public Property Let DaySelectionStyle(ByVal Value As enmSelectionStyle)
     PropertyChanged "DaySelectionStyle"
     If m_IsChild Then Draw: Refresh
 End Property
-
-'m_DayShowHotItem                As Boolean 'Siempre muestra el hot
-'Public Property Get DayShowHotItem() As Boolean
-'    DayShowHotItem = m_DayShowHotItem
-'End Property
-'Public Property Let DayShowHotItem(ByVal Value As Boolean)
-'    m_DayShowHotItem = Value
-'    PropertyChanged "DayShowHotItem"
-'End Property
-
 
 'm_DaySaturdayForeColor          As OLE_COLOR
 Public Property Get DaySaturdayForeColor() As OLE_COLOR
@@ -2327,7 +2353,7 @@ End Sub
 Private Sub UserControl_InitProperties()
     'hFontCollection = ReadValue(&HFC)
     '---
-    m_BackColor = &HFFFFFF
+    m_BackColor = SystemColorConstants.vbWindowBackground
     m_BackOpacity = 100
     m_Border = True
     m_BorderWidth = 1
@@ -2372,11 +2398,11 @@ Private Sub UserControl_InitProperties()
     
     m_FirstDayOfWeek = vbUseSystemDayOfWeek
 
-    m_CountFreeDays = True
+    m_CountFreeDay = True
     m_CountReservedDay = True
 
     '---> De los botones de navegacion
-    m_ButtonNavBackColor = &HFFFFFF
+    m_ButtonNavBackColor = SystemColorConstants.vbWindowBackground
     m_ButtonNavBorderWidth = 1
     m_ButtonNavBorderColor = SystemColorConstants.vbActiveBorder
     m_ButtonNavCornerRadius = 12
@@ -2386,7 +2412,7 @@ Private Sub UserControl_InitProperties()
     m_ButtonNavHeight = 24
     
     '---> De los botones de accion
-    m_ButtonsBackColor = &HFFFFFF
+    m_ButtonsBackColor = SystemColorConstants.vbWindowBackground
     m_ButtonsBorderWidth = 1
     m_ButtonsBorderColor = SystemColorConstants.vbActiveBorder
     m_ButtonsCornerRadius = 5
@@ -2396,11 +2422,11 @@ Private Sub UserControl_InitProperties()
     m_ButtonsHeight = 24
     
     '---> De los meses y años
-    m_MonthYearBackColor = &HFFFFFF
+    m_MonthYearBackColor = SystemColorConstants.vbWindowBackground
     Set m_MonthYearFont = UserControl.Ambient.Font
     m_MonthYearForeColor = SystemColorConstants.vbButtonText
     '---> De las Semanas.
-    m_WeekBackColor = &HFFFFFF
+    m_WeekBackColor = SystemColorConstants.vbWindowBackground
     Set m_WeekFont = UserControl.Ambient.Font
     m_WeekFontHeaderBold = True
     m_WeekForeColor = SystemColorConstants.vbGrayText
@@ -2408,32 +2434,31 @@ Private Sub UserControl_InitProperties()
     m_WeekHeight = 24
 
     '---> De los días.
-    m_DayBackColor = &HFFFFFF
+    m_DayBackColor = SystemColorConstants.vbWindowBackground
     Set m_DayFont = UserControl.Ambient.Font
     m_DayHeaderFontBold = True
     m_DayHeaderForeColor = SystemColorConstants.vbButtonText
     m_DayHotColor = SystemColorConstants.vbHighlight
     m_DayForeColor = SystemColorConstants.vbButtonText
     m_DayOMForeColor = SystemColorConstants.vbGrayText
-    m_DayFreeForeColor = ColorConstants.vbRed
+    m_DayHolidayBackColor = SystemColorConstants.vbWindowBackground
+    m_DayHolidayForeColor = ColorConstants.vbRed
     '--
     m_DayNowShow = False
     m_DayNowBorderWidth = 0
     m_DayNowBorderColor = SystemColorConstants.vbActiveBorder
-    m_DayNowBackColor = &HFFFFFF
+    m_DayNowBackColor = SystemColorConstants.vbWindowBackground
     m_DayNowForeColor = SystemColorConstants.vbButtonText
     '--
-    'Mouse event (Los días no tendran color para el mousedown)
-    m_DayOverBackColor = &H999999
-    m_DayOverForeColor = &HFFFFFF
+    m_DayReservedBackColor = SystemColorConstants.vbWindowBackground
+    m_DayReservedForeColor = SystemColorConstants.vbButtonText
     '--
     m_DaySelBetweenColor = &HE5D7CA
-    'm_DaySelEndColor = &HB06D00
     m_DaySelValuesColor = &HB06D00
-    m_DaySelForeColor = &HFFFFFF
+    m_DaySelForeColor = SystemColorConstants.vbWindowBackground
     m_DaySelFontBold = True
     m_DaySelectionStyle = [Corner No Between]
-    'm_DayShowHotItem = True 'Siempre muestra el hot
+    '--
     m_DaySaturdayForeColor = &H999999
     m_DaySundayForeColor = &H999999
     m_DayWidth = 24
@@ -2454,44 +2479,107 @@ End Sub
 Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
     Dim i, a As Integer
     Dim bTemp As Boolean
-    '-> Botones del o los calendario(s)
-    For i = 0 To UBound(udtItemsNavButton)
-        With udtItemsNavButton(i)
-            If PtInRect(.RECT2, X, Y) Then
-                If .MouseState = Hot Then
-                    .MouseState = Pressed
-                    Call Draw ': Refresh
-                    Exit For
-                End If
-            End If
-        End With
-    Next
-    '---
     
-    '-> Mes y año
-    For i = 0 To UBound(udtItemsPicker)
-        With udtItemsPicker(i)
-            If PtInRect(.TitleMonthYear.RECT2, X, Y) Then
-                If .TitleMonthYear.MouseState = Hot Then .TitleMonthYear.MouseState = Pressed
+    'Solo click izquierdo
+    If Button = vbLeftButton Then
+        '-> Botones del o los calendario(s)
+        For i = 0 To UBound(udtItemsNavButton)
+            With udtItemsNavButton(i)
+                If PtInRect(.RECT2, X, Y) Then
+                    If .MouseState = Hot Then
+                        .MouseState = Pressed
+                        Call Draw ': Refresh
+                        Exit For
+                    End If
+                End If
+            End With
+        Next
+        '---
+        
+        '-> Mes y año
+        For i = 0 To UBound(udtItemsPicker)
+            With udtItemsPicker(i)
+                If PtInRect(.TitleMonthYear.RECT2, X, Y) Then
+                    If .TitleMonthYear.MouseState = Hot Then .TitleMonthYear.MouseState = Pressed
+                    '--
+                    Call Draw ': Refresh
+                End If
                 '--
-                Call Draw ': Refresh
-            End If
-            '--
-            If .ViewNavigator <> ViewItemNavigatorDays And m_LinkedCalendars Then
-                For a = 0 To UBound(udtItemsUpDownButton)
-                    With udtItemsUpDownButton(a)
-                        If PtInRect(.RECT2, X, Y) Then
+                If .ViewNavigator <> ViewItemNavigatorDays And m_LinkedCalendars Then
+                    For a = 0 To UBound(udtItemsUpDownButton)
+                        With udtItemsUpDownButton(a)
+                            If PtInRect(.RECT2, X, Y) Then
+                                .MouseState = Pressed
+                                '--
+                                Call Draw ': Refresh
+                            End If
+                        End With
+                    Next
+                End If
+            End With
+        Next
+        '---
+    
+        '-> Meses o Años de la navegacion rapida.
+        For i = 0 To UBound(udtItemsMonthYear)
+            With udtItemsMonthYear(i)
+                If udtItemsPicker(.IndexCalendar).ViewNavigator <> ViewItemNavigatorDays Then
+                    If PtInRect(.RECT2, X, Y) Then
+                        If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
+                            bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem + 1, 1) - 1 < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
+                        Else
+                            'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                        End If
+                        If Not bTemp Then
                             .MouseState = Pressed
-                            '--
                             Call Draw ': Refresh
                         End If
-                    End With
-                Next
-            End If
-        End With
-    Next
+                    End If
+                End If
+            End With
+        Next
+        '---
+    
+        '-> Botones de los rangos de fecha.
+        If m_ShowRangeButtons And m_UseRangeValue Then
+            For i = 0 To UBound(udtItemsRangeButton)
+                With udtItemsRangeButton(i)
+                    If PtInRect(.RECT2, X, Y) Then
+                        .MouseState = Pressed
+                        '--
+                        Call Draw ': Refresh
+                        '--
+                    End If
+                End With
+            Next
+        End If
+        '---
+    
+        '-> Botones de accion.
+        If Not m_AutoApply Or m_ShowTodayButton Then
+            For i = 0 To UBound(udtItemsActionButton)
+                With udtItemsActionButton(i)
+                    If PtInRect(.RECT2, X, Y) Then
+                        'Si no hay fecha selecta en rangos, considerar botones deshabilitados.
+                        If (.ButtonAction = [Action Cancel] And [Action Apply]) Then
+                            If m_UseRangeValue And m_IsChild Then
+                                If m_ValueStart = "" And m_ValueEnd = "" Then
+                                    Exit Sub
+                                End If
+                            End If
+                        End If
+                        '--
+                        .MouseState = Pressed
+                        '--
+                        Call Draw ': Refresh
+                        '--
+                    End If
+                End With
+            Next
+        End If
+    End If
     '---
-
+    
     '-> Días de los meses.
     For i = 0 To UBound(udtItemsDay)
         With udtItemsDay(i)
@@ -2500,56 +2588,7 @@ Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Sing
             End If
         End With
     Next
-
-    '-> Meses o Años de la navegacion rapida.
-    For i = 0 To UBound(udtItemsMonthYear)
-        With udtItemsMonthYear(i)
-            If udtItemsPicker(.IndexCalendar).ViewNavigator <> ViewItemNavigatorDays Then
-                If PtInRect(.RECT2, X, Y) Then
-                    If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
-                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
-                    Else
-                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
-                    End If
-                    If Not bTemp Then
-                        .MouseState = Pressed
-                        Call Draw ': Refresh
-                    End If
-                End If
-            End If
-        End With
-    Next
-    '---
-
-    '-> Botones de los rangos de fecha.
-    If m_ShowRangeButtons And m_UseRangeValue Then
-        For i = 0 To UBound(udtItemsRangeButton)
-            With udtItemsRangeButton(i)
-                If PtInRect(.RECT2, X, Y) Then
-                    .MouseState = Pressed
-                    '--
-                    Call Draw ': Refresh
-                    '--
-                End If
-            End With
-        Next
-    End If
-    '---
-
-    '-> Botones de accion.
-    If Not m_AutoApply Or m_ShowTodayButton Then
-        For i = 0 To UBound(udtItemsActionButton)
-            With udtItemsActionButton(i)
-                If PtInRect(.RECT2, X, Y) Then
-                    .MouseState = Pressed
-                    '--
-                    Call Draw ': Refresh
-                    '--
-                End If
-            End With
-        Next
-    End If
-    '---
+    
 End Sub
 
 Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -2674,56 +2713,6 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
             End With
         Next
     End If
-    '-> Dias del mes.
-    If iCalendar <> -1 Then
-        If udtItemsPicker(iCalendar).ViewNavigator = ViewItemNavigatorDays Then
-            For a = iCalendar To iCalendar
-                With udtItemsPicker(a)
-                    If PtInRect(.RECT2, X, Y) Then
-                        For i = 0 To UBound(udtItemsDay)
-                            With udtItemsDay(i)
-                                If PtInRect(.RECT2, X, Y) Then
-                                    If .DateValue >= m_MinDate And .DateValue <= m_MaxDate Then
-                                        If .MouseState = Normal Then
-                                            .MouseState = IIF(Button = vbLeftButton, Pressed, Hot)
-                                            ShowHandPointer True
-                                            '--
-                                            If IsDate(m_ValueStart) Then
-                                                If (m_MaxRangeDays And DateDiff("d", m_ValueStart, .DateValue, m_UserFirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
-                                                    If ((CDate(m_ValueStart) <= .DateValue) And m_ValueEnd = "") Then
-                                                        c_IndexSelMove = i
-                                                    End If
-                                                End If
-                                            End If
-                                            tmrMouseEvent.Interval = 2
-                                            Exit Sub
-                                        End If
-                                    Else
-                                        Exit Sub
-                                    End If
-                                Else
-                                    If .MouseState <> Normal Then
-                                        .MouseState = Normal
-                                        ShowHandPointer False
-                                        ResetControl
-                                        tmrMouseEvent.Interval = 2
-                                        Exit Sub
-                                    End If
-                                End If
-                            End With
-                        Next
-                        Exit Sub
-                    Else
-                        iCalendar = -1
-                        ShowHandPointer False
-                        ResetControl
-                        tmrMouseEvent.Interval = 2
-                    End If
-                End With
-            Next
-        End If
-    End If
-    '---
 
     '-> Meses o Años de la navegacion rapida.
     If iCalendar <> -1 Then
@@ -2735,7 +2724,7 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
                             With udtItemsMonthYear(i)
                                 If PtInRect(.RECT2, X, Y) Then
                                     If udtItemsPicker(a).ViewNavigator = ViewItemNavigatorMonths Then
-                                        bTemp = DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) > m_MaxDate
+                                        bTemp = DateSerial(udtItemsPicker(a).NumberYear, .ValueItem + 1, 1) - 1 < m_MinDate Or DateSerial(udtItemsPicker(a).NumberYear, .ValueItem, 1) > m_MaxDate
                                     Else
                                         'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
                                     End If
@@ -2813,6 +2802,15 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
             With udtItemsActionButton(i)
                 If PtInRect(.RECT2, X, Y) Then
                     If .MouseState = Normal Then
+                        'Si no hay fecha selecta en rangos, considerar botones deshabilitados.
+                        If (.ButtonAction = [Action Cancel] And [Action Apply]) Then
+                            If m_UseRangeValue And m_IsChild Then
+                                If m_ValueStart = "" And m_ValueEnd = "" Then
+                                    Exit Sub
+                                End If
+                            End If
+                        End If
+                        '--
                         .MouseState = IIF(Button = vbLeftButton, Pressed, Hot)
                         ShowHandPointer True
                         tmrMouseEvent.Interval = 2
@@ -2830,6 +2828,57 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
         Next
     End If
     '---
+    
+    '-> Dias del mes.
+    If iCalendar <> -1 Then
+        If udtItemsPicker(iCalendar).ViewNavigator = ViewItemNavigatorDays Then
+            For a = iCalendar To iCalendar
+                With udtItemsPicker(a)
+                    If PtInRect(.RECT2, X, Y) Then
+                        For i = 0 To UBound(udtItemsDay)
+                            With udtItemsDay(i)
+                                If PtInRect(.RECT2, X, Y) Then
+                                    If .DateValue >= m_MinDate And .DateValue <= m_MaxDate Then
+                                        If .MouseState = Normal Then
+                                            .MouseState = IIF(Button = vbLeftButton, Pressed, Hot)
+                                            ShowHandPointer True
+                                            '--
+                                            If IsDate(m_ValueStart) Then
+                                                If (m_MaxRangeDays And DateDiff("d", m_ValueStart, .DateValue, m_UserFirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
+                                                    If ((CDate(m_ValueStart) <= .DateValue) And m_ValueEnd = "") Then
+                                                        c_IndexSelMove = i
+                                                    End If
+                                                End If
+                                            End If
+                                            tmrMouseEvent.Interval = 2
+                                            Exit Sub
+                                        End If
+                                    Else
+                                        Exit Sub
+                                    End If
+                                Else
+                                    If .MouseState <> Normal Then
+                                        .MouseState = Normal
+                                        ShowHandPointer False
+                                        ResetControl
+                                        tmrMouseEvent.Interval = 2
+                                        Exit Sub
+                                    End If
+                                End If
+                            End With
+                        Next
+                        Exit Sub
+                    Else
+                        iCalendar = -1
+                        ShowHandPointer False
+                        ResetControl
+                        tmrMouseEvent.Interval = 2
+                    End If
+                End With
+            Next
+        End If
+    End If
+    '---
 End Sub
 
 Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -2838,159 +2887,274 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
     Dim pi_Temp As Integer
     Dim J As Integer
     Dim bTemp As Boolean
-    '-> Botones de navegacion del calendario(s)
-    For i = 0 To UBound(udtItemsNavButton)
-        With udtItemsNavButton(i)
-            If PtInRect(.RECT2, X, Y) Then
-                M = IIF(i Mod 2 = 0, -1, 1)
-                '--
-                .MouseState = Hot
-                '--
-                If m_LinkedCalendars And b_ShowFastNavigator Then
-                    For a = 0 To UBound(udtItemsPicker)
-                        With udtItemsPicker(a)
-                            If .ViewNavigator <> ViewItemNavigatorDays Then .ViewNavigator = ViewItemNavigatorDays
-                            .NumberYear = Year(.DateInPicker)
-                            .NumberMonth = Month(.DateInPicker)
-                            .MonthName = MonthName(Month(dDate))
-                        End With
-                    Next
-                    b_ShowFastNavigator = False
-                End If
-                For a = IIF(m_LinkedCalendars, 0, .IndexCalendar) To IIF(m_LinkedCalendars, UBound(udtItemsPicker), .IndexCalendar)
-                    With udtItemsPicker(a)
-                        dDate = DateSerial(.NumberYear, .NumberMonth, 1)
-                        If .ViewNavigator = ViewItemNavigatorDays Then
-                            dDate = DateAdd("m", M, dDate)
-                        End If
-                        If Not m_LinkedCalendars Then
-                            If .ViewNavigator = ViewItemNavigatorMonths Then
-                                dDate = DateAdd("yyyy", M, dDate)
-                            ElseIf .ViewNavigator = ViewItemNavigatorYears Then
-                                pi_Temp = (udtItemsMonthYear(IIF(M = -1, 0, UBound(udtItemsMonthYear) - 1)).ValueItem - Year(dDate))
-                                dDate = DateAdd("yyyy", pi_Temp, dDate)
-                            End If
-                        End If
-                        '---
-                        .NumberYear = Year(dDate)
-                        .NumberMonth = Month(dDate)
-                        .MonthName = MonthName(Month(dDate))
-                        'If Not b_ShowFastNavigator Then .DateInPicker = DateSerial(.NumberYear, .NumberMonth, 1)
-                        .DateInPicker = DateSerial(.NumberYear, .NumberMonth, 1)
-                        '---
-                        Call ChangeViewPicker
-                    End With
-                Next
-                '---
-                Call Draw ': Refresh
-                '---
-            End If
-        End With
-    Next
-    '---
-
-    '-> Mes y año
-    For i = 0 To UBound(udtItemsPicker)
-        With udtItemsPicker(i)
-            If PtInRect(.TitleMonthYear.RECT2, X, Y) Then
-                If .TitleMonthYear.MouseState = Pressed Then
-                    .TitleMonthYear.MouseState = Hot
-                    For J = 0 To UBound(udtItemsPicker)
-                        With udtItemsPicker(J)
-                            If .ViewNavigator <> ViewItemNavigatorDays And .IndexCalendar <> i Then
-                                If DateSerial(.NumberYear, .NumberMonth, 1) <> .DateInPicker Then
-                                    .NumberMonth = Month(.DateInPicker)
-                                    .NumberYear = Year(.DateInPicker)
-                                    .MonthName = MonthName(.NumberMonth)
-                                End If
-                                .ViewNavigator = ViewItemNavigatorDays
-                            End If
-                        End With
-                    Next
-                    '---
-                    .TitleMonthYear.MouseState = Hot
-                    '---
-                    If .ViewNavigator = ViewItemNavigatorDays Then
-                        .ViewNavigator = ViewItemNavigatorMonths
-                    ElseIf .ViewNavigator = ViewItemNavigatorMonths Then
-                        .ViewNavigator = ViewItemNavigatorYears
+    
+    'Solo click izquierdo
+    If Button = vbLeftButton Then
+        '-> Botones de navegacion del calendario(s)
+        For i = 0 To UBound(udtItemsNavButton)
+            With udtItemsNavButton(i)
+                If PtInRect(.RECT2, X, Y) Then
+                    M = IIF(i Mod 2 = 0, -1, 1)
+                    '--
+                    .MouseState = Hot
+                    '--
+                    If m_LinkedCalendars And b_ShowFastNavigator Then
+                        For a = 0 To UBound(udtItemsPicker)
+                            With udtItemsPicker(a)
+                                If .ViewNavigator <> ViewItemNavigatorDays Then .ViewNavigator = ViewItemNavigatorDays
+                                .NumberYear = Year(.DateInPicker)
+                                .NumberMonth = Month(.DateInPicker)
+                                .MonthName = MonthName(Month(dDate))
+                            End With
+                        Next
+                        b_ShowFastNavigator = False
                     End If
-                    Call ChangeViewPicker
-                    '---
-                    Call Draw ': Refresh
-                End If
-            End If
-            If .ViewNavigator <> ViewItemNavigatorDays And m_LinkedCalendars Then
-                For a = 0 To UBound(udtItemsUpDownButton)
-                    With udtItemsUpDownButton(a)
-                        If PtInRect(.RECT2, X, Y) Then
-                            If .MouseState = Pressed Then
-                                M = IIF(a Mod 2 = 0, -1, 1)
-                                '--
-                                dDate = DateSerial(udtItemsPicker(i).NumberYear, udtItemsPicker(i).NumberMonth, 1)
-                                '--
-                                If udtItemsPicker(i).ViewNavigator = ViewItemNavigatorMonths Then
+                    For a = IIF(m_LinkedCalendars, 0, .IndexCalendar) To IIF(m_LinkedCalendars, UBound(udtItemsPicker), .IndexCalendar)
+                        With udtItemsPicker(a)
+                            dDate = DateSerial(.NumberYear, .NumberMonth, 1)
+                            If .ViewNavigator = ViewItemNavigatorDays Then
+                                dDate = DateAdd("m", M, dDate)
+                            End If
+                            If Not m_LinkedCalendars Then
+                                If .ViewNavigator = ViewItemNavigatorMonths Then
                                     dDate = DateAdd("yyyy", M, dDate)
-                                ElseIf udtItemsPicker(i).ViewNavigator = ViewItemNavigatorYears Then
+                                ElseIf .ViewNavigator = ViewItemNavigatorYears Then
                                     pi_Temp = (udtItemsMonthYear(IIF(M = -1, 0, UBound(udtItemsMonthYear) - 1)).ValueItem - Year(dDate))
                                     dDate = DateAdd("yyyy", pi_Temp, dDate)
                                 End If
-                                udtItemsPicker(i).NumberYear = Year(dDate)
-                                udtItemsPicker(i).NumberMonth = Month(dDate)
-                                udtItemsPicker(i).MonthName = MonthName(Month(dDate))
-                                '---
-                                Call ChangeViewPicker
-                                '--
+                            End If
+                            '---
+                            .NumberYear = Year(dDate)
+                            .NumberMonth = Month(dDate)
+                            .MonthName = MonthName(Month(dDate))
+                            'If Not b_ShowFastNavigator Then .DateInPicker = DateSerial(.NumberYear, .NumberMonth, 1)
+                            .DateInPicker = DateSerial(.NumberYear, .NumberMonth, 1)
+                            '---
+                            Call ChangeViewPicker
+                        End With
+                    Next
+                    '---
+                    Call Draw ': Refresh
+                    '---
+                End If
+            End With
+        Next
+        '---
+    
+        '-> Mes y año
+        For i = 0 To UBound(udtItemsPicker)
+            With udtItemsPicker(i)
+                If PtInRect(.TitleMonthYear.RECT2, X, Y) Then
+                    If .TitleMonthYear.MouseState = Pressed Then
+                        .TitleMonthYear.MouseState = Hot
+                        For J = 0 To UBound(udtItemsPicker)
+                            With udtItemsPicker(J)
+                                If .ViewNavigator <> ViewItemNavigatorDays And .IndexCalendar <> i Then
+                                    If DateSerial(.NumberYear, .NumberMonth, 1) <> .DateInPicker Then
+                                        .NumberMonth = Month(.DateInPicker)
+                                        .NumberYear = Year(.DateInPicker)
+                                        .MonthName = MonthName(.NumberMonth)
+                                    End If
+                                    .ViewNavigator = ViewItemNavigatorDays
+                                End If
+                            End With
+                        Next
+                        '---
+                        .TitleMonthYear.MouseState = Hot
+                        '---
+                        If .ViewNavigator = ViewItemNavigatorDays Then
+                            .ViewNavigator = ViewItemNavigatorMonths
+                        ElseIf .ViewNavigator = ViewItemNavigatorMonths Then
+                            .ViewNavigator = ViewItemNavigatorYears
+                        End If
+                        Call ChangeViewPicker
+                        '---
+                        Call Draw ': Refresh
+                    End If
+                End If
+                If .ViewNavigator <> ViewItemNavigatorDays And m_LinkedCalendars Then
+                    For a = 0 To UBound(udtItemsUpDownButton)
+                        With udtItemsUpDownButton(a)
+                            If PtInRect(.RECT2, X, Y) Then
+                                If .MouseState = Pressed Then
+                                    M = IIF(a Mod 2 = 0, -1, 1)
+                                    '--
+                                    dDate = DateSerial(udtItemsPicker(i).NumberYear, udtItemsPicker(i).NumberMonth, 1)
+                                    '--
+                                    If udtItemsPicker(i).ViewNavigator = ViewItemNavigatorMonths Then
+                                        dDate = DateAdd("yyyy", M, dDate)
+                                    ElseIf udtItemsPicker(i).ViewNavigator = ViewItemNavigatorYears Then
+                                        pi_Temp = (udtItemsMonthYear(IIF(M = -1, 0, UBound(udtItemsMonthYear) - 1)).ValueItem - Year(dDate))
+                                        dDate = DateAdd("yyyy", pi_Temp, dDate)
+                                    End If
+                                    udtItemsPicker(i).NumberYear = Year(dDate)
+                                    udtItemsPicker(i).NumberMonth = Month(dDate)
+                                    udtItemsPicker(i).MonthName = MonthName(Month(dDate))
+                                    '---
+                                    Call ChangeViewPicker
+                                    '--
+                                    .MouseState = Hot
+                                    udtItemsPicker(i).TitleMonthYear.MouseState = Inherint
+                                    '--
+                                    Call Draw ': Refresh
+                                End If
+                            End If
+                        End With
+                    Next
+                End If
+            End With
+        Next
+    
+        '-> Meses o Años de la navegacion rapida.
+        For i = 0 To UBound(udtItemsMonthYear)
+            With udtItemsMonthYear(i)
+                If udtItemsPicker(.IndexCalendar).ViewNavigator <> ViewItemNavigatorDays Then
+                    If PtInRect(.RECT2, X, Y) Then
+                        If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
+                            bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem + 1, 1) - 1 < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
+                        Else
+                            'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
+                        End If
+                        If Not bTemp Then
+                            If .MouseState = Pressed Then
                                 .MouseState = Hot
-                                udtItemsPicker(i).TitleMonthYear.MouseState = Inherint
-                                '--
+                                '---
+                                Select Case udtItemsPicker(.IndexCalendar).ViewNavigator
+                                    Case ViewItemNavigatorMonths
+                                        If (DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem + 1, 1) - 1 >= m_MinDate) And (DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) <= m_MaxDate) Then
+                                            udtItemsPicker(.IndexCalendar).NumberMonth = .ValueItem
+                                            udtItemsPicker(.IndexCalendar).MonthName = MonthName(.ValueItem)
+                                            udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1)
+                                            udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorDays
+                                            If m_LinkedCalendars Then UpdateLinkedCalendar (.IndexCalendar): b_ShowFastNavigator = False
+                                        End If
+                                    Case ViewItemNavigatorYears
+                                        If .ValueItem >= Year(m_MinDate) And .ValueItem <= Year(m_MaxDate) Then
+                                            udtItemsPicker(.IndexCalendar).NumberYear = .ValueItem
+                                            udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths
+                                        End If
+                                End Select
+                                Call ChangeViewPicker
                                 Call Draw ': Refresh
+                                Exit Sub
                             End If
                         End If
-                    End With
-                Next
-            End If
-        End With
-    Next
-
+                    End If
+                End If
+            End With
+        Next
+        '---
+    
+        '-> Botones de rangos.
+        If m_ShowRangeButtons And m_UseRangeValue Then
+            For i = 0 To UBound(udtItemsRangeButton)
+                With udtItemsRangeButton(i)
+                    If PtInRect(.RECT2, X, Y) Then
+                        If .MouseState = Pressed Then
+                            .MouseState = Hot
+                            RaiseEvent ButtonRangeClick(i, .Caption)
+                            Call Draw ': Refresh
+                        End If
+                    End If
+                End With
+            Next
+        End If
+        '---
+        '-> Botones de accion.
+        If Not m_AutoApply Or m_ShowTodayButton Then
+            For i = 0 To UBound(udtItemsActionButton)
+                With udtItemsActionButton(i)
+                    If PtInRect(.RECT2, X, Y) Then
+                        If .MouseState = Pressed Then
+                            .MouseState = Hot
+                            Select Case .ButtonAction
+                                Case [Action Today]
+                                    d_ValueTemp = Date
+                                    With udtItemsPicker(0)
+                                        .NumberYear = Year(d_ValueTemp)
+                                        .NumberMonth = Month(d_ValueTemp)
+                                        .MonthName = MonthName(Month(d_ValueTemp))
+                                        If m_UseRangeValue Then
+                                            .DateInPicker = DateSerial(.NumberYear, .NumberMonth, 1)
+                                            m_ValueStart = d_ValueTemp: RaiseEvent ChangeStartDate(d_ValueTemp)
+                                            m_ValueEnd = d_ValueTemp: RaiseEvent ChangeEndDate(d_ValueTemp)
+                                        Else
+                                            .DateInPicker = d_ValueTemp
+                                            RaiseEvent ChangeDate(d_ValueTemp)
+                                        End If
+                                    End With
+                                    Call UpdateLinkedCalendar(0)
+                                Case [Action Cancel]
+                                    If Not IsChild Then
+                                        If m_UseRangeValue Then
+                                            m_ValueStart = d_ValueTempStart
+                                            m_ValueEnd = d_ValueTempEnd
+                                        End If
+                                        Call HideCalendar
+                                        Exit Sub
+                                    Else
+                                        ValueStart = ""
+                                        RaiseEvent ChangeStartDate("")
+                                        ValueEnd = ""
+                                        RaiseEvent ChangeEndDate("")
+                                    End If
+                                Case [Action Apply]
+                                    If ApplyChangeValues Then Exit Sub
+                            End Select
+                            RaiseEvent ButtonActionClick(i, .Caption)
+                            Call Draw ': Refresh
+                        End If
+                    End If
+                End With
+            Next
+        End If
+    End If
+    '---
+    
     '-> Días de los meses.
     For i = 0 To UBound(udtItemsDay)
         With udtItemsDay(i)
             If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorDays Then
-                'If c_EnterButton = True And ((X >= .RECT.Left And X <= (.RECT.Left + .RECT.Width)) And (Y >= .RECT.Top And (Y <= .RECT.Top + .RECT.Height))) Then
                 If PtInRect(.RECT2, X, Y) Then
                     If .MouseState = Pressed Then
                         .MouseState = Hot
                         '---
                         If m_UseRangeValue Then
-                            If m_ValueStart <> "" And m_ValueEnd <> "" Then
-                                m_ValueStart = "": m_ValueEnd = ""
-                                c_IndexSelMove = -1
-                            End If
-                            '--
-                            If .DateValue >= m_MinDate And .DateValue <= m_MaxDate Then
-                                If Len(m_ValueStart) <= 0 Then
-                                    m_ValueStart = .DateValue
-                                    RaiseEvent ChangeStartDate(m_ValueStart)
-                                    '---
-                                    If m_AutoApply Then
-                                        udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
-                                    End If
-                                Else
-                                    If .DateValue >= CDate(m_ValueStart) Then
-                                        If (m_MaxRangeDays And DateDiff("d", m_ValueStart, .DateValue, m_UserFirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
-                                            m_ValueEnd = .DateValue
-                                            RaiseEvent ChangeEndDate(m_ValueEnd)
-                                            If m_AutoApply Then
-                                                udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
-                                                Call ApplyChangeValues
+                            If Button = vbLeftButton Then
+                                If m_ValueStart <> "" And m_ValueEnd <> "" Then
+                                    m_ValueStart = "": m_ValueEnd = ""
+                                    c_IndexSelMove = -1
+                                End If
+                                '--
+                                If .DateValue >= m_MinDate And .DateValue <= m_MaxDate Then
+                                    If Len(m_ValueStart) <= 0 Then
+                                        m_ValueStart = .DateValue
+                                        RaiseEvent ChangeStartDate(m_ValueStart)
+                                        '---
+                                        If m_AutoApply Then
+                                            udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
+                                        End If
+                                    Else
+                                        If .DateValue >= CDate(m_ValueStart) Then
+                                            If (m_MaxRangeDays And DateDiff("d", m_ValueStart, .DateValue, m_UserFirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
+                                                m_ValueEnd = .DateValue
+                                                RaiseEvent ChangeEndDate(m_ValueEnd)
+                                                If m_AutoApply Then
+                                                    udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
+                                                    Call ApplyChangeValues
+                                                End If
                                             End If
                                         End If
                                     End If
+                                    '---
+                                    Call Draw ': Refresh
+                                    '---
                                 End If
-                                '---
-                                Call Draw ': Refresh
-                                '---
+                            ElseIf Button = vbRightButton Then
+                                If .IsEndDate Then
+                                    If m_ValueEnd <> "" Then m_ValueEnd = ""
+                                    'RaiseEvent ChangeEndDate(m_ValueEnd)
+                                End If
                             End If
                         Else
                             If .DateValue >= m_MinDate And .DateValue <= m_MaxDate Then
@@ -3011,118 +3175,15 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
         End With
     Next
     '---
-
-    '-> Meses o Años de la navegacion rapida.
-    For i = 0 To UBound(udtItemsMonthYear)
-        With udtItemsMonthYear(i)
-            If udtItemsPicker(.IndexCalendar).ViewNavigator <> ViewItemNavigatorDays Then
-                If PtInRect(.RECT2, X, Y) Then
-                    If udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths Then
-                        bTemp = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) > m_MaxDate
-                    Else
-                        'bTemp = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MinDate)
-                    End If
-                    If Not bTemp Then
-                        If .MouseState = Pressed Then
-                            .MouseState = Hot
-                            '---
-                            Select Case udtItemsPicker(.IndexCalendar).ViewNavigator
-                                Case ViewItemNavigatorMonths
-                                    If (DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) >= m_MinDate) And (DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1) <= m_MaxDate) Then
-                                        udtItemsPicker(.IndexCalendar).NumberMonth = .ValueItem
-                                        udtItemsPicker(.IndexCalendar).MonthName = MonthName(.ValueItem)
-                                        udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(udtItemsPicker(.IndexCalendar).NumberYear, .ValueItem, 1)
-                                        udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorDays
-                                        If m_LinkedCalendars Then UpdateLinkedCalendar (.IndexCalendar): b_ShowFastNavigator = False
-                                    End If
-                                Case ViewItemNavigatorYears
-                                    If .ValueItem >= Year(m_MinDate) And .ValueItem <= Year(m_MaxDate) Then
-                                        udtItemsPicker(.IndexCalendar).NumberYear = .ValueItem
-                                        udtItemsPicker(.IndexCalendar).ViewNavigator = ViewItemNavigatorMonths
-                                    End If
-                            End Select
-                            Call ChangeViewPicker
-                            Call Draw ': Refresh
-                        End If
-                    End If
-                End If
-            End If
-        End With
-    Next
-    '---
-
-    '-> Botones de rangos.
-    If m_ShowRangeButtons And m_UseRangeValue Then
-        For i = 0 To UBound(udtItemsRangeButton)
-            With udtItemsRangeButton(i)
-                If PtInRect(.RECT2, X, Y) Then
-                    If .MouseState = Pressed Then
-                        .MouseState = Hot
-                        RaiseEvent ButtonRangeClick(i, .Caption)
-                        Call Draw ': Refresh
-                    End If
-                End If
-            End With
-        Next
-    End If
-    '---
-
-    '-> Botones de accion.
-    If Not m_AutoApply Or m_ShowTodayButton Then
-        For i = 0 To UBound(udtItemsActionButton)
-            With udtItemsActionButton(i)
-                If PtInRect(.RECT2, X, Y) Then
-                    If .MouseState = Pressed Then
-                        .MouseState = Hot
-                        Select Case .ButtonAction
-                            Case [Action Today]
-                                d_ValueTemp = Date
-                                With udtItemsPicker(0)
-                                    .NumberYear = Year(d_ValueTemp)
-                                    .NumberMonth = Month(d_ValueTemp)
-                                    .MonthName = MonthName(Month(d_ValueTemp))
-                                    If m_UseRangeValue Then
-                                        .DateInPicker = DateSerial(.NumberYear, .NumberMonth, 1)
-                                        m_ValueStart = d_ValueTemp: RaiseEvent ChangeStartDate(d_ValueTemp)
-                                        m_ValueEnd = d_ValueTemp: RaiseEvent ChangeEndDate(d_ValueTemp)
-                                    Else
-                                        .DateInPicker = d_ValueTemp
-                                        RaiseEvent ChangeDate(d_ValueTemp)
-                                    End If
-                                End With
-                                Call UpdateLinkedCalendar(0)
-                            Case [Action Cancel]
-                                If Not IsChild Then
-                                    Call HideCalendar
-                                    Exit Sub
-                                Else
-                                    ValueStart = ""
-                                    RaiseEvent ChangeStartDate("")
-                                    ValueEnd = ""
-                                    RaiseEvent ChangeEndDate("")
-                                End If
-                            Case [Action Apply]
-                                If ApplyChangeValues Then Exit Sub
-                        End Select
-                        RaiseEvent ButtonActionClick(i, .Caption)
-                        Call Draw ': Refresh
-                    End If
-                End If
-            End With
-        Next
-    End If
-    '---
 End Sub
 
 Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
-    '---
-    'hFontCollection = ReadValue(&HFC)
     '---
     c_hWnd = UserControl.ContainerHwnd
     If Ambient.UserMode Then UserControl.Picture = Nothing
     '---
     With PropBag
-        m_BackColor = .ReadProperty("BackColor", &HFFFFFF)
+        m_BackColor = .ReadProperty("BackColor", SystemColorConstants.vbWindowBackground)
         m_BackOpacity = .ReadProperty("BackOpacity", 100)
         m_Border = .ReadProperty("Border", True)
         m_BorderWidth = .ReadProperty("BorderWidth", 1)
@@ -3174,11 +3235,11 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         m_MaxDate = .ReadProperty("MaxDate", DateSerial(9999, 12, 31))
         m_FirstDayOfWeek = .ReadProperty("FirstDayOfWeek", vbUseSystemDayOfWeek)
         
-        m_CountFreeDays = .ReadProperty("CountFreeDays", True)
+        m_CountFreeDay = .ReadProperty("CountFreeDay", True)
         m_CountReservedDay = .ReadProperty("CountReservedDay", True)
         
         '---> De los botones de navegacion.
-        m_ButtonNavBackColor = .ReadProperty("ButtonNavBackColor", &HFFFFFF)
+        m_ButtonNavBackColor = .ReadProperty("ButtonNavBackColor", SystemColorConstants.vbWindowBackground)
         m_ButtonNavBorderWidth = .ReadProperty("ButtonNavBorderWidth", 1)
         m_ButtonNavBorderColor = .ReadProperty("ButtonNavBorderColor", SystemColorConstants.vbActiveBorder)
         m_ButtonNavCornerRadius = .ReadProperty("ButtonNavCornerRadius", 0)
@@ -3191,7 +3252,7 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         m_ButtonNavHeight = .ReadProperty("ButtonNavHeight", 24)
         
         '---> De los botones de accion.
-        m_ButtonsBackColor = .ReadProperty("ButtonsBackColor", &HFFFFFF)
+        m_ButtonsBackColor = .ReadProperty("ButtonsBackColor", SystemColorConstants.vbWindowBackground)
         m_ButtonsBorderWidth = .ReadProperty("ButtonsBorderWidth", 1)
         m_ButtonsBorderColor = .ReadProperty("ButtonsBorderColor", SystemColorConstants.vbActiveBorder)
         m_ButtonsCornerRadius = .ReadProperty("ButtonsCornerRadius", 5)
@@ -3201,7 +3262,7 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         m_ButtonsHeight = .ReadProperty("ButtonsHeight", 24)
 
         '---> De los meses y años
-        m_MonthYearBackColor = .ReadProperty("MonthYearBackColor", &HFFFFFF)
+        m_MonthYearBackColor = .ReadProperty("MonthYearBackColor", SystemColorConstants.vbWindowBackground)
         m_MonthYearBorderWidth = .ReadProperty("MonthYearBorderWidth", 0)
         m_MonthYearBorderColor = .ReadProperty("MonthYearBorderColor", SystemColorConstants.vbActiveBorder)
         m_MonthYearCornerRadius = .ReadProperty("MonthYearCornerRadius", 0)
@@ -3209,7 +3270,7 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         m_MonthYearForeColor = .ReadProperty("MonthYearForeColor", SystemColorConstants.vbButtonText)
 
         '---> De las Semanas.
-        m_WeekBackColor = .ReadProperty("WeekBackColor", &HFFFFFF)
+        m_WeekBackColor = .ReadProperty("WeekBackColor", SystemColorConstants.vbWindowBackground)
         m_WeekBorderWidth = .ReadProperty("WeekBorderWidth", 0)
         m_WeekBorderColor = .ReadProperty("WeekBorderColor", SystemColorConstants.vbActiveBorder)
         m_WeekCornerRadius = .ReadProperty("WeekCornerRadius", 0)
@@ -3220,7 +3281,7 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         m_WeekHeight = .ReadProperty("WeekHeight", 24)
 
         '---> De los días.
-        m_DayBackColor = .ReadProperty("DayBackColor", &HFFFFFF)
+        m_DayBackColor = .ReadProperty("DayBackColor", SystemColorConstants.vbWindowBackground)
         m_DayBorderWidth = .ReadProperty("DayBorderWidth", 0)
         m_DayBorderColor = .ReadProperty("DayBorderColor", SystemColorConstants.vbActiveBorder)
         m_DayCornerRadius = .ReadProperty("DayCornerRadius", 0)
@@ -3230,26 +3291,23 @@ Private Sub UserControl_ReadProperties(PropBag As PropertyBag)
         m_DayHotColor = .ReadProperty("DayHotColor", SystemColorConstants.vbHighlight)
         m_DayForeColor = .ReadProperty("DayForeColor", SystemColorConstants.vbButtonText)
         m_DayOMForeColor = .ReadProperty("DayOMForeColor", SystemColorConstants.vbGrayText)
-        m_DayFreeArray = .ReadProperty("DayFreeArray", Null)
-        m_DayFreeForeColor = .ReadProperty("DayFreeForeColor", ColorConstants.vbRed)
+        m_DayHolidayBackColor = .ReadProperty("DayHolidayBackColor", SystemColorConstants.vbWindowBackground)
+        m_DayHolidayForeColor = .ReadProperty("DayHolidayForeColor", ColorConstants.vbRed)
         
         m_DayNowShow = .ReadProperty("DayNowShow", False)
         m_DayNowBorderWidth = .ReadProperty("DayNowBorderWidth", 0)
         m_DayNowBorderColor = .ReadProperty("DayNowBorderColor", SystemColorConstants.vbActiveBorder)
-        m_DayNowBackColor = .ReadProperty("DayNowBackColor", &HFFFFFF)
+        m_DayNowBackColor = .ReadProperty("DayNowBackColor", SystemColorConstants.vbWindowBackground)
         m_DayNowForeColor = .ReadProperty("DayNowForeColor", SystemColorConstants.vbButtonText)
         
-        'Mouse event (Los días no tendran color para el mousedown)
-        m_DayOverBackColor = .ReadProperty("DayOverBackColor", &H999999)
-        m_DayOverForeColor = .ReadProperty("DayOverForeColor", &HFFFFFF)
-        '--
+        m_DayReservedBackColor = .ReadProperty("DayReservedBackColor", SystemColorConstants.vbWindowBackground)
+        m_DayReservedForeColor = .ReadProperty("DayReservedForeColor", SystemColorConstants.vbButtonText)
+        
         m_DaySelBetweenColor = .ReadProperty("DaySelBetweenColor", &HE5D7CA)
-        'm_DaySelEndColor = .ReadProperty("DaySelEndColor", &HB06D00)
         m_DaySelValuesColor = .ReadProperty("DaySelValuesColor", &HB06D00)
-        m_DaySelForeColor = .ReadProperty("DaySelForeColor", &HFFFFFF)
+        m_DaySelForeColor = .ReadProperty("DaySelForeColor", SystemColorConstants.vbWindowBackground)
         m_DaySelFontBold = .ReadProperty("DaySelFontBold", True)
         m_DaySelectionStyle = .ReadProperty("DaySelectionStyle", [Corner No Between])
-        'm_DayShowHotItem = .ReadProperty("DayShowHotItem", True) 'Siempre muestra el hot
         m_DaySaturdayForeColor = .ReadProperty("DaySaturdayForeColor", &H999999)
         m_DaySundayForeColor = .ReadProperty("DaySundayForeColor", &H999999)
         m_DayWidth = .ReadProperty("DayWidth", 24)
@@ -3339,7 +3397,7 @@ End Sub
 Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
     '---
     With PropBag
-        Call .WriteProperty("BackColor", m_BackColor, &HFFFFFF)
+        Call .WriteProperty("BackColor", m_BackColor, SystemColorConstants.vbWindowBackground)
         Call .WriteProperty("BackOpacity", m_BackOpacity, 100)
         Call .WriteProperty("Border", m_Border, True)
         Call .WriteProperty("BorderWidth", m_BorderWidth, 1)
@@ -3392,11 +3450,11 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         
         Call .WriteProperty("FirstDayOfWeek", m_FirstDayOfWeek, vbUseSystemDayOfWeek)
         
-        Call .WriteProperty("CountFreeDays", m_CountFreeDays, True)
+        Call .WriteProperty("CountFreeDay", m_CountFreeDay, True)
         Call .WriteProperty("CountReservedDay", m_CountReservedDay, True)
         
         '---> De los botones de navegacion.
-        Call .WriteProperty("ButtonNavBackColor", m_ButtonNavBackColor, &HFFFFFF)
+        Call .WriteProperty("ButtonNavBackColor", m_ButtonNavBackColor, SystemColorConstants.vbWindowBackground)
         Call .WriteProperty("ButtonNavBorderWidth", m_ButtonNavBorderWidth, 1)
         Call .WriteProperty("ButtonNavBorderColor", m_ButtonNavBorderColor, SystemColorConstants.vbActiveBorder)
         Call .WriteProperty("ButtonNavCornerRadius", m_ButtonNavCornerRadius, 0)
@@ -3409,7 +3467,7 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         Call .WriteProperty("ButtonNavHeight", m_ButtonNavHeight, 24)
         
         '---> De los botones de accion.
-        Call .WriteProperty("ButtonsBackColor", m_ButtonsBackColor, &HFFFFFF)
+        Call .WriteProperty("ButtonsBackColor", m_ButtonsBackColor, SystemColorConstants.vbWindowBackground)
         Call .WriteProperty("ButtonsBorderWidth", m_ButtonsBorderWidth, 1)
         Call .WriteProperty("ButtonsBorderColor", m_ButtonsBorderColor, SystemColorConstants.vbActiveBorder)
         Call .WriteProperty("ButtonsCornerRadius", m_ButtonsCornerRadius, 5)
@@ -3419,7 +3477,7 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         Call .WriteProperty("ButtonsHeight", m_ButtonsHeight, 24)
 
         '---> De los meses y años
-        Call .WriteProperty("MonthYearBackColor", m_MonthYearBackColor, &HFFFFFF)
+        Call .WriteProperty("MonthYearBackColor", m_MonthYearBackColor, SystemColorConstants.vbWindowBackground)
         Call .WriteProperty("MonthYearBorderWidth", m_MonthYearBorderWidth, 0)
         Call .WriteProperty("MonthYearBorderColor", m_MonthYearBorderColor, SystemColorConstants.vbActiveBorder)
         Call .WriteProperty("MonthYearCornerRadius", m_MonthYearCornerRadius, 0)
@@ -3427,7 +3485,7 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         Call .WriteProperty("MonthYearForeColor", m_MonthYearForeColor, SystemColorConstants.vbButtonText)
 
         '---> De las Semanas.
-        Call .WriteProperty("WeekBackColor", m_WeekBackColor, &HFFFFFF)
+        Call .WriteProperty("WeekBackColor", m_WeekBackColor, SystemColorConstants.vbWindowBackground)
         
         Call .WriteProperty("WeekBorderWidth", m_WeekBorderWidth, 0)
         Call .WriteProperty("WeekBorderColor", m_WeekBorderColor, SystemColorConstants.vbActiveBorder)
@@ -3439,7 +3497,7 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         Call .WriteProperty("WeekHeight", m_WeekHeight, 24)
 
         '---> De los días.
-        Call .WriteProperty("DayBackColor", m_DayBackColor, &HFFFFFF)
+        Call .WriteProperty("DayBackColor", m_DayBackColor, SystemColorConstants.vbWindowBackground)
         Call .WriteProperty("DayBorderWidth", m_DayBorderWidth, 0)
         Call .WriteProperty("DayBorderColor", m_DayBorderColor, SystemColorConstants.vbActiveBorder)
         Call .WriteProperty("DayCornerRadius", m_DayCornerRadius, 0)
@@ -3449,25 +3507,23 @@ Private Sub UserControl_WriteProperties(PropBag As PropertyBag)
         Call .WriteProperty("DayHotColor", m_DayHotColor, SystemColorConstants.vbHighlight)
         Call .WriteProperty("DayForeColor", m_DayForeColor, SystemColorConstants.vbButtonText)
         Call .WriteProperty("DayOMForeColor", m_DayOMForeColor, SystemColorConstants.vbGrayText)
-        Call .WriteProperty("DayFreeArray", m_DayFreeArray, Null)
-        Call .WriteProperty("DayFreeForeColor", m_DayFreeForeColor, ColorConstants.vbRed)
+        Call .WriteProperty("DayHolidayBackColor", m_DayHolidayBackColor, SystemColorConstants.vbWindowBackground)
+        Call .WriteProperty("DayHolidayForeColor", m_DayHolidayForeColor, ColorConstants.vbRed)
         Call .WriteProperty("DayNowShow", m_DayNowShow, False)
         Call .WriteProperty("DayNowBorderWidth", m_DayNowBorderWidth, 0)
         Call .WriteProperty("DayNowBorderColor", m_DayNowBorderColor, SystemColorConstants.vbActiveBorder)
-        Call .WriteProperty("DayNowBackColor", m_DayNowBackColor, &HFFFFFF)
+        Call .WriteProperty("DayNowBackColor", m_DayNowBackColor, SystemColorConstants.vbWindowBackground)
         Call .WriteProperty("DayNowForeColor", m_DayNowForeColor, SystemColorConstants.vbButtonText)
         
-        'Mouse event (Los días no tendran color para el mousedown)
-        Call .WriteProperty("DayOverBackColor", m_DayOverBackColor, &H999999)
-        Call .WriteProperty("DayOverForeColor", m_DayOverForeColor, &HFFFFFF)
+        Call .WriteProperty("DayReservedBackColor", m_DayReservedBackColor, SystemColorConstants.vbWindowBackground)
+        Call .WriteProperty("DayReservedForeColor", m_DayReservedForeColor, SystemColorConstants.vbButtonText)
         '--
         Call .WriteProperty("DaySelBetweenColor", m_DaySelBetweenColor, &HE5D7CA)
-        'Call .WriteProperty("DaySelEndColor", m_DaySelEndColor, &H0)
         Call .WriteProperty("DaySelValuesColor", m_DaySelValuesColor, &HB06D00)
-        Call .WriteProperty("DaySelForeColor", m_DaySelForeColor, &HFFFFFF)
+        Call .WriteProperty("DaySelForeColor", m_DaySelForeColor, SystemColorConstants.vbWindowBackground)
         Call .WriteProperty("DaySelFontBold", m_DaySelFontBold, True)
         Call .WriteProperty("DaySelectionStyle", m_DaySelectionStyle, [Corner No Between])
-        'Call .WriteProperty("DayShowHotItem", m_DayShowHotItem, True) ' Seimpre muestra el hot
+        '--
         Call .WriteProperty("DaySaturdayForeColor", m_DaySaturdayForeColor, &H999999)
         Call .WriteProperty("DaySundayForeColor", m_DaySundayForeColor, &H999999)
         Call .WriteProperty("DayWidth", m_DayWidth, 24)
@@ -3518,6 +3574,12 @@ Public Sub ShowCalendar(Left As Long, Top As Long)
         '---
         InitControl
         Draw
+        If m_UseRangeValue Then
+            If Len(Trim(m_ValueStart)) And Len(Trim(m_ValueEnd)) Then
+                d_ValueTempStart = CDate(m_ValueStart)
+                d_ValueTempEnd = CDate(m_ValueEnd)
+            End If
+        End If
         '---
     End If
 End Sub
@@ -3534,16 +3596,56 @@ Public Sub HideCalendar()
     tmrMouseEvent.Interval = 0
 End Sub
 
+'Para setear dias reservados y feriados.
+Public Sub SetDaysRaservedAndHoliday(ByVal strDate As String, TypeDay As enmTypeDay)
+On Error GoTo ErrorRutina
+    Dim i           As Long
+    Dim bExists     As Boolean
+'---
+    If Not IsDate(strDate) Then Exit Sub
+    If GetCountUdtDaysReservedFree() < 0 Then
+        ReDim Preserve udtItemsDayReservedAndHoliday(0)
+        '---
+        With udtItemsDayReservedAndHoliday(0)
+            .DateValue = strDate
+            .TypeDay = TypeDay
+        End With
+    Else
+        For i = 0 To UBound(udtItemsDayReservedAndHoliday)
+            If CDate(strDate) = CDate(udtItemsDayReservedAndHoliday(i).DateValue) Then
+                bExists = True
+                Exit For
+            End If
+        Next
+        If Not bExists Then
+            m_DaysReservedAndFree = UBound(udtItemsDayReservedAndHoliday) + 1
+            ReDim Preserve udtItemsDayReservedAndHoliday(m_DaysReservedAndFree)
+            '---
+            With udtItemsDayReservedAndHoliday(m_DaysReservedAndFree)
+                .DateValue = strDate
+                .TypeDay = TypeDay
+            End With
+        End If
+    End If
+    Draw
+'---
+    Exit Sub
+ErrorRutina:
+    MsgBox "Error Nro.: " & Err.Number & vbCrLf & _
+           "Description: " & Err.Description, vbExclamation
+End Sub
+
+
 Public Sub SetRangeButtonsCaption(Index As Integer, strCaption As String)
-    On Error GoTo ErrorRutina
-    '---
+On Error GoTo ErrorRutina
+'---
     If Index > UBound(udtItemsRangeButton) Then
         Err.Raise Number:="5001", Description:="Invalid button index"
     Else
         udtItemsRangeButton(Index).Caption = strCaption
     End If
     Exit Sub
-    '---
+'---
 ErrorRutina:
     MsgBox "Error Nro.: " & Err.Number & vbCrLf & _
            "Description: " & Err.Description, vbExclamation
@@ -4033,6 +4135,7 @@ Private Sub Draw()
     Dim hGraphics       As Long
     Dim i               As Integer
     Dim a               As Integer
+    Dim z               As Long
     Dim countItem       As Integer
     Dim lRect           As RECTL
     Dim Corners         As Radius
@@ -4206,8 +4309,6 @@ Private Sub Draw()
                         .TopLeft = m_DayCornerRadius: .TopRight = m_DayCornerRadius: .BottomLeft = m_DayCornerRadius: .BottomRight = m_DayCornerRadius
                     End With
                     '---
-                    'If .MouseState = Hot Then BackColor = ShiftColor(m_BackColor, m_DaySelValuesColor, 200) 'm_DayHotColor
-                    If .MouseState = Hot Then BackColor = m_DayHotColor
                     If .MouseState = Normal Then BackColor = m_DayBackColor
                     '---
                     IsBold = False
@@ -4216,12 +4317,19 @@ Private Sub Draw()
                         TextColor = m_DayForeColor
                         If .IsDaySaturday Then TextColor = m_DaySaturdayForeColor
                         If .IsDaySunday Then TextColor = m_DaySundayForeColor
-                        If .IsFreeDay Then TextColor = m_DayFreeForeColor
+                        If .IsFreeDay Then TextColor = m_DayHolidayForeColor
                         If IsLock Then TextColor = vbGrayText
                         If .IsNow And m_DayNowShow Then
                             BackColor = m_DayNowBackColor
                             If Not .IsDaySaturday And Not .IsDaySunday And Not .IsFreeDay And Not IsLock Then TextColor = m_DayNowForeColor
                             BorderWidth = m_DayNowBorderWidth: BorderColor = m_DayNowBorderColor
+                        End If
+                        'PrePaint
+                        RaiseEvent DayPrePaint(curDate, ColorPre)
+                        If ColorPre <> 0 Then
+                            m_DaysPrePaintCount = 0
+                            BackColor = ColorPre
+                            m_DaysPrePaintCount = m_DaysPrePaintCount + 1
                         End If
                         'Start / End Date Selection
                         If .IsStartDate Or .IsEndDate Then
@@ -4262,11 +4370,25 @@ Private Sub Draw()
                             End If
                         End If
                         '---
-                        RaiseEvent DayPrePaint(curDate, ColorPre)
-                        If ColorPre <> 0 Then
-                            m_DaysPrePaintCount = 0
-                            BackColor = ColorPre
-                            m_DaysPrePaintCount = m_DaysPrePaintCount + 1
+                        'Días reservados y feriados o libres.
+                        If Not GetCountUdtDaysReservedFree < 0 Then
+                            For z = 0 To UBound(udtItemsDayReservedAndHoliday)
+                                If curDate = CDate(udtItemsDayReservedAndHoliday(z).DateValue) And udtItemsDayReservedAndHoliday(z).TypeDay = TypeDayFree Then
+                                    If (Not .IsBetweenDate And Not .IsStartDate And Not .IsEndDate And Not m_DayHolidayBackColor = m_DayBackColor) Or (Not m_DayHolidayBackColor = m_DayBackColor) Then
+                                        BackColor = m_DayHolidayBackColor
+                                    End If
+                                    TextColor = m_DayHolidayForeColor
+                                ElseIf curDate = CDate(udtItemsDayReservedAndHoliday(z).DateValue) And udtItemsDayReservedAndHoliday(z).TypeDay = TypeDayReserved Then
+                                    If (Not .IsBetweenDate And Not .IsStartDate And Not .IsEndDate And Not m_DayReservedBackColor = m_DayBackColor) Or (Not m_DayReservedBackColor = m_DayBackColor) Then
+                                        BackColor = m_DayReservedBackColor
+                                    End If
+                                    TextColor = m_DayReservedForeColor
+                                End If
+                            Next
+                        End If
+                        '---
+                        If (m_UseRangeValue And Not .IsBetweenDate And Not .IsStartDate And Not .IsEndDate) Or (Not m_UseRangeValue And Not .IsValueDate) Then
+                            If .MouseState = Hot Then BackColor = m_DayHotColor
                         End If
                     Else
                         TextColor = m_DayOMForeColor
@@ -4324,7 +4446,7 @@ Private Sub Draw()
                 With udtItemsMonthYear(a)
                     '---
                     If udtItemsPicker(i).ViewNavigator = ViewItemNavigatorMonths Then
-                        IsLock = DateSerial(udtItemsPicker(i).NumberYear, .ValueItem, 1) < m_MinDate Or DateSerial(udtItemsPicker(i).NumberYear, .ValueItem, 1) > m_MaxDate
+                        IsLock = DateSerial(udtItemsPicker(i).NumberYear, .ValueItem + 1, 1) - 1 < m_MinDate Or DateSerial(udtItemsPicker(i).NumberYear, .ValueItem, 1) > m_MaxDate
                     Else
                         IsLock = .ValueItem < Year(m_MinDate) Or .ValueItem > Year(m_MaxDate)
                     End If
@@ -4588,6 +4710,16 @@ End Sub
 '* Funciones *
 '*************
 '-> Privadas
+
+Private Function GetCountUdtDaysReservedFree() As Long
+On Error GoTo FunctionError
+'---
+    GetCountUdtDaysReservedFree = UBound(udtItemsDayReservedAndHoliday)
+'---
+    Exit Function
+FunctionError:
+    GetCountUdtDaysReservedFree = -1
+End Function
 
 Private Function ApplyChangeValues() As Boolean
     ApplyChangeValues = False
