@@ -3086,17 +3086,11 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                     Call UpdateLinkedCalendar(0)
                                 Case [Action Cancel]
                                     If Not IsChild Then
-                                        If m_UseRangeValue Then
-                                            m_ValueStart = d_ValueTempStart
-                                            m_ValueEnd = d_ValueTempEnd
-                                        End If
                                         Call HideCalendar
                                         Exit Sub
                                     Else
-                                        ValueStart = ""
-                                        RaiseEvent ChangeStartDate("")
-                                        ValueEnd = ""
-                                        RaiseEvent ChangeEndDate("")
+                                        ValueStart = "": RaiseEvent ChangeStartDate("")
+                                        ValueEnd = "": RaiseEvent ChangeEndDate("")
                                     End If
                                 Case [Action Apply]
                                     If ApplyChangeValues Then Exit Sub
@@ -3586,6 +3580,13 @@ End Sub
 
 Public Sub HideCalendar()
     If Not c_Show Then Exit Sub
+    '--
+    If m_UseRangeValue Then
+        If Len(Trim(m_ValueEnd)) = 0 Then
+            m_ValueStart = d_ValueTempStart
+            m_ValueEnd = d_ValueTempEnd
+        End If
+    End If
     '--
     c_SubClass.ssc_UnSubclass UserControl.hWnd
     ShowWindow UserControl.hWnd, 0
