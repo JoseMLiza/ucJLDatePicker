@@ -1135,8 +1135,8 @@ End Property
 Public Property Let UseRangeValue(ByVal Value As Boolean)
     m_UseRangeValue = Value
     If Not m_UseRangeValue Then
-        ValueStart = vbNullString
-        ValueEnd = vbNullString
+        m_ValueStart = vbNullString
+        m_ValueEnd = vbNullString
     End If
     PropertyChanged "UseRangeValue"
     If m_IsChild Then Draw: Refresh
@@ -1189,7 +1189,8 @@ Public Property Let AutoApply(ByVal Value As Boolean)
 '    End If
     ShowTodayButton = IIF(m_AutoApply, True, False)
     PropertyChanged "AutoApply"
-    If m_IsChild Then InitControl: Draw: Refresh
+    InitControl
+    If m_IsChild Then: Draw: Refresh
 End Property
 
 'm_IsChild                       As Boolean
@@ -2323,26 +2324,40 @@ Private Sub UserControl_Initialize()
     '---
     iCalendar = -1
     '---
-    udtItemsRangeButton(0).Caption = "Today"                'Hoy
-    udtItemsRangeButton(1).Caption = "Current month"        'Este mes
-    udtItemsRangeButton(2).Caption = "Last month"           'Mes pasado
-    udtItemsRangeButton(3).Caption = "Last 90 days"         'Ultimos 90 días
-    udtItemsRangeButton(4).Caption = "Current year"         'Este Año
-    udtItemsRangeButton(5).Caption = "Last year"            'Año pasado
+    'Hoy
+    udtItemsRangeButton(0).Caption = "Today"
+    udtItemsRangeButton(0).IsVisible = True
+    'Este mes
+    udtItemsRangeButton(1).Caption = "Current month"
+    udtItemsRangeButton(1).IsVisible = True
+    'Mes pasado
+    udtItemsRangeButton(2).Caption = "Last month"
+    udtItemsRangeButton(2).IsVisible = True
+    'Ultimos 90 días
+    udtItemsRangeButton(3).Caption = "Last 90 days"
+    udtItemsRangeButton(3).IsVisible = True
+    'Este Año
+    udtItemsRangeButton(4).Caption = "Current year"
+    udtItemsRangeButton(4).IsVisible = True
+    'Año pasado
+    udtItemsRangeButton(5).Caption = "Last year"
+    udtItemsRangeButton(5).IsVisible = True
     '---
-    udtItemsActionButton(0).Caption = "Today"               'Hoy
+    'Botones de acción
+    'Hoy
+    udtItemsActionButton(0).Caption = "Today"
     udtItemsActionButton(0).ButtonAction = [Action Today]
     udtItemsActionButton(0).IsVisible = True
-    
+    'Cancelar
     If Not IsChild Then
-        udtItemsActionButton(1).Caption = "Cancel"          'Cancelar
+        udtItemsActionButton(1).Caption = "Cancel"
     Else
-        udtItemsActionButton(1).Caption = "None"            'Cancelar
+        udtItemsActionButton(1).Caption = "None"
     End If
     udtItemsActionButton(1).ButtonAction = [Action Cancel]
     udtItemsActionButton(0).IsVisible = True
-    
-    udtItemsActionButton(2).Caption = "Apply"               'Aplicar
+    'Aplicar
+    udtItemsActionButton(2).Caption = "Apply"
     udtItemsActionButton(2).ButtonAction = [Action Apply]
     If IsChild Then udtItemsActionButton(2).IsVisible = False
     '---
@@ -2561,9 +2576,15 @@ Private Sub UserControl_MouseDown(Button As Integer, Shift As Integer, X As Sing
                 With udtItemsActionButton(i)
                     If PtInRect(.RECT2, X, Y) Then
                         'Si no hay fecha selecta en rangos, considerar botones deshabilitados.
-                        If (.ButtonAction = [Action Cancel] And [Action Apply]) Then
-                            If m_UseRangeValue And m_IsChild Then
+                        If .ButtonAction = [Action Cancel] Then
+                            If m_UseRangeValue Then
                                 If m_ValueStart = "" And m_ValueEnd = "" Then
+                                    Exit Sub
+                                End If
+                            End If
+                        ElseIf .ButtonAction = [Action Apply] Then
+                            If m_UseRangeValue Then
+                                If m_ValueStart = "" Or m_ValueEnd = "" Then
                                     Exit Sub
                                 End If
                             End If
@@ -2803,9 +2824,15 @@ Private Sub UserControl_MouseMove(Button As Integer, Shift As Integer, X As Sing
                 If PtInRect(.RECT2, X, Y) Then
                     If .MouseState = Normal Then
                         'Si no hay fecha selecta en rangos, considerar botones deshabilitados.
-                        If (.ButtonAction = [Action Cancel] And [Action Apply]) Then
-                            If m_UseRangeValue And m_IsChild Then
+                        If .ButtonAction = [Action Cancel] Then
+                            If m_UseRangeValue Then
                                 If m_ValueStart = "" And m_ValueEnd = "" Then
+                                    Exit Sub
+                                End If
+                            End If
+                        ElseIf .ButtonAction = [Action Apply] Then
+                            If m_UseRangeValue Then
+                                If m_ValueStart = "" Or m_ValueEnd = "" Then
                                     Exit Sub
                                 End If
                             End If
@@ -3054,6 +3081,8 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                             .MouseState = Hot
                             RaiseEvent ButtonRangeClick(i, .Caption)
                             Call Draw ': Refresh
+                            '--
+                            If Not m_IsChild Then Call HideCalendar
                         End If
                     End If
                 End With
@@ -3085,12 +3114,22 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                     End With
                                     Call UpdateLinkedCalendar(0)
                                 Case [Action Cancel]
+                                    If m_UseRangeValue Then
+                                        If m_ValueStart = d_ValueTempStart And m_ValueEnd = d_ValueTempEnd Then
+                                            m_ValueStart = ""
+                                            m_ValueEnd = ""
+                                        Else
+                                            m_ValueStart = d_ValueTempStart
+                                            m_ValueEnd = d_ValueTempEnd
+                                        End If
+                                        ApplyChangeValues
+                                    Else
+                                        m_Value = d_ValueTemp
+                                    End If
+                                    '---
                                     If Not IsChild Then
                                         Call HideCalendar
                                         Exit Sub
-                                    Else
-                                        ValueStart = "": RaiseEvent ChangeStartDate("")
-                                        ValueEnd = "": RaiseEvent ChangeEndDate("")
                                     End If
                                 Case [Action Apply]
                                     If ApplyChangeValues Then Exit Sub
@@ -3123,16 +3162,15 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                 If .DateValue >= m_MinDate And .DateValue <= m_MaxDate Then
                                     If Len(m_ValueStart) <= 0 Then
                                         m_ValueStart = .DateValue
-                                        RaiseEvent ChangeStartDate(m_ValueStart)
                                         '---
                                         If m_AutoApply Then
                                             udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
+                                            Call ApplyChangeValues
                                         End If
                                     Else
                                         If .DateValue >= CDate(m_ValueStart) Then
                                             If (m_MaxRangeDays And DateDiff("d", m_ValueStart, .DateValue, m_UserFirstDayOfWeek) + 1 <= m_MaxRangeDays) Or Not m_MaxRangeDays > 0 Then
                                                 m_ValueEnd = .DateValue
-                                                RaiseEvent ChangeEndDate(m_ValueEnd)
                                                 If m_AutoApply Then
                                                     udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
                                                     Call ApplyChangeValues
@@ -3147,12 +3185,11 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                             ElseIf Button = vbRightButton Then
                                 If .IsEndDate Then
                                     If m_ValueEnd <> "" Then m_ValueEnd = ""
-                                    'RaiseEvent ChangeEndDate(m_ValueEnd)
                                 End If
                             End If
                         Else
                             If .DateValue >= m_MinDate And .DateValue <= m_MaxDate Then
-                                d_ValueTemp = .DateValue
+                                m_Value = .DateValue
                                 If m_AutoApply Then
                                     udtItemsPicker(.IndexCalendar).DateInPicker = DateSerial(.DatePartYear, .DatePartMonth, 1)
                                     '--
@@ -3568,12 +3605,12 @@ Public Sub ShowCalendar(Left As Long, Top As Long)
         '---
         InitControl
         Draw
-        If m_UseRangeValue Then
-            If Len(Trim(m_ValueStart)) And Len(Trim(m_ValueEnd)) Then
-                d_ValueTempStart = CDate(m_ValueStart)
-                d_ValueTempEnd = CDate(m_ValueEnd)
-            End If
-        End If
+'        If m_UseRangeValue Then
+'            If Len(Trim(m_ValueStart)) And Len(Trim(m_ValueEnd)) Then
+'                d_ValueTempStart = CDate(m_ValueStart)
+'                d_ValueTempEnd = CDate(m_ValueEnd)
+'            End If
+'        End If
         '---
     End If
 End Sub
@@ -3586,6 +3623,8 @@ Public Sub HideCalendar()
             m_ValueStart = d_ValueTempStart
             m_ValueEnd = d_ValueTempEnd
         End If
+    Else
+        m_Value = d_ValueTemp
     End If
     '--
     c_SubClass.ssc_UnSubclass UserControl.hWnd
@@ -3637,13 +3676,14 @@ ErrorRutina:
 End Sub
 
 
-Public Sub SetRangeButtonsCaption(Index As Integer, strCaption As String)
+Public Sub SetRangeButtons(Index As Integer, strCaption As String, Optional Visible As Boolean = True)
 On Error GoTo ErrorRutina
 '---
     If Index > UBound(udtItemsRangeButton) Then
         Err.Raise Number:="5001", Description:="Invalid button index"
     Else
-        udtItemsRangeButton(Index).Caption = strCaption
+        If Len(Trim(strCaption)) > 0 Then udtItemsRangeButton(Index).Caption = strCaption
+        udtItemsRangeButton(Index).IsVisible = Visible
     End If
     Exit Sub
 '---
@@ -3688,6 +3728,10 @@ Private Sub InitControl()
     Dim btnWidth As Long
     Dim PaddingX As Long
     Dim PaddingY As Long
+    Dim bShowAction As Boolean
+    Dim iBR As Integer, cBR, BR As Integer
+    '---
+    iBR = 0: cBR = 0: BR = 0
     '---> Ininicar hGraphics para calular area de texto.
     GdipCreateBitmapFromScan0 UserControl.ScaleWidth, UserControl.ScaleHeight, 0&, PixelFormat32bppPARGB, ByVal 0&, hImage
     GdipGetImageGraphicsContext hImage, hGraphics
@@ -3817,28 +3861,42 @@ Private Sub InitControl()
         btnWidth = 0
         For i = 0 To UBound(udtItemsRangeButton)
             With udtItemsRangeButton(i)
-                SetRect sRECTL, 0, 0, 0, 0
-                GdiPlusGetMeasureString hGraphics, .Caption, sRECTL.Width, sRECTL.Height, m_ButtonsFont
-                'GetMeasureText hdc, .Caption, sRECTL.Width, sRECTL.Height, m_ButtonsFont
-                If sRECTL.Width > btnWidth Then btnWidth = sRECTL.Width
+                SetRect .RECT2, -1000, 1000, 0, 0
             End With
         Next
         For i = 0 To UBound(udtItemsRangeButton)
             With udtItemsRangeButton(i)
-                If m_ColsPicker Then
-                    a = m_ColsPicker - 1
-                Else
-                    a = m_NumberPickers - 1
+                If .IsVisible Then
+                    SetRect sRECTL, 0, 0, 0, 0
+                    GdiPlusGetMeasureString hGraphics, .Caption, sRECTL.Width, sRECTL.Height, m_ButtonsFont
+                    'GetMeasureText hdc, .Caption, sRECTL.Width, sRECTL.Height, m_ButtonsFont
+                    If sRECTL.Width > btnWidth Then btnWidth = sRECTL.Width
+                    cBR = cBR + 1
                 End If
-                '--
-                tmph = m_ButtonsHeight / 3
-                '--
-                .RECT.Left = udtItemsPicker(a).RECT.Left + udtItemsPicker(a).RECT.Width + (PaddingX * 2)
-                '.RECT.Top = (udtItemsPicker(0).TitleMonthYear.RECT.Top + udtItemsPicker(0).TitleMonthYear.RECT.Height) + (i * m_ButtonNavHeight) + ((m_ButtonNavHeight / 3) * i)
-                .RECT.Top = PaddingY + (IIF(m_ColsPicker, udtItemsPicker(m_NumberPickers - 1).RECT.Top + udtItemsPicker(m_NumberPickers - 1).RECT.Height - PaddingY, udtItemsPicker(a).RECT.Height) / 2) - (((m_ButtonsHeight * (UBound(udtItemsRangeButton) + 1)) + (tmph * UBound(udtItemsRangeButton))) / 2) + (m_ButtonsHeight * i) + (tmph * i)
-                .RECT.Width = btnWidth + (btnWidth / 2)
-                .RECT.Height = m_ButtonsHeight
-                .RECT2 = RectLToRect(.RECT)
+            End With
+        Next
+        '---
+        If m_ColsPicker Then
+            a = m_ColsPicker - 1
+        Else
+            a = m_NumberPickers - 1
+        End If
+        '--
+        tmph = m_ButtonsHeight / 3
+        '---
+        For i = 0 To UBound(udtItemsRangeButton)
+            With udtItemsRangeButton(i)
+                If .IsVisible Then
+                    '--
+                    .RECT.Left = udtItemsPicker(a).RECT.Left + udtItemsPicker(a).RECT.Width + (PaddingX * 2)
+                    '.RECT.Top = (udtItemsPicker(0).TitleMonthYear.RECT.Top + udtItemsPicker(0).TitleMonthYear.RECT.Height) + (i * m_ButtonNavHeight) + ((m_ButtonNavHeight / 3) * i)
+                    .RECT.Top = PaddingY + (IIF(m_ColsPicker, udtItemsPicker(m_NumberPickers - 1).RECT.Top + udtItemsPicker(m_NumberPickers - 1).RECT.Height - PaddingY, udtItemsPicker(a).RECT.Height) / 2) - (((m_ButtonsHeight * (cBR)) + (tmph * cBR)) / 2) + (m_ButtonsHeight * BR) + (tmph * BR)
+                    .RECT.Width = btnWidth + (btnWidth / 2)
+                    .RECT.Height = m_ButtonsHeight
+                    .RECT2 = RectLToRect(.RECT)
+                    iBR = i
+                    BR = BR + 1
+                End If
             End With
         Next
     End If
@@ -3847,15 +3905,29 @@ Private Sub InitControl()
     'Botones de accion.
     'udtItemsActionButton(2) 'Para botones de rangos ('Hoy', 'Cancelar', 'Aplicar')
     'Definir nombres en los botones de accion:
-    If Not m_AutoApply Or m_ShowTodayButton Then
+    If Not m_AutoApply Then
+        bShowAction = True: countItem = UBound(udtItemsActionButton)
+    Else
+        If m_ShowTodayButton Then
+            bShowAction = True: countItem = UBound(udtItemsActionButton) - 2
+        Else
+            bShowAction = False
+        End If
+    End If
+    '---
+    For i = 0 To UBound(udtItemsActionButton)
+        With udtItemsActionButton(i)
+            SetRect .RECT2, -1000, -1000, 0, 0
+        End With
+    Next
+    If bShowAction Then
         btnWidth = 0
-        countItem = UBound(udtItemsActionButton) - IIF(m_ShowTodayButton, 2, IIF(IsChild, 1, 0))
         For i = 0 To countItem
             With udtItemsActionButton(i)
                 SetRect sRECTL, 0, 0, 0, 0
                 GdiPlusGetMeasureString hGraphics, .Caption, sRECTL.Width, sRECTL.Height, m_ButtonsFont
                 'GetMeasureText hdc, .Caption, sRECTL.Width, sRECTL.Height, m_ButtonsFont
-                If sRECTL.Width > btnWidth Then btnWidth = (sRECTL.Width + sRECTL.Width / 2)
+                If sRECTL.Width > btnWidth Then btnWidth = (sRECTL.Width + sRECTL.Width / 3)
             End With
         Next
         For i = 0 To countItem
@@ -3883,7 +3955,7 @@ Private Sub InitControl()
             a = RoundUp(m_NumberPickers / m_ColsPicker)
             i = 0
         End If
-        c_Width = (((udtItemsPicker(i).RECT.Left + udtItemsPicker(i).RECT.Width) * IIF(m_ColsPicker, m_ColsPicker, 1)) + PaddingX + IIF(m_ShowRangeButtons And m_UseRangeValue, udtItemsRangeButton(0).RECT.Width + (PaddingX * 2), 0) + IIF(m_CallOutPosition = [Position Right] And Not m_IsChild, coWidth, 0)) * Screen.TwipsPerPixelX
+        c_Width = (((udtItemsPicker(i).RECT.Left + udtItemsPicker(i).RECT.Width) * IIF(m_ColsPicker, m_ColsPicker, 1)) + PaddingX + IIF(m_ShowRangeButtons And m_UseRangeValue, udtItemsRangeButton(iBR).RECT.Width + (PaddingX * 2), 0) + IIF(m_CallOutPosition = [Position Right] And Not m_IsChild, coWidth, 0)) * Screen.TwipsPerPixelX
         c_Height = (((udtItemsPicker(0).RECT.Top + udtItemsPicker(0).RECT.Height) * a) + PaddingY + IIF(Not m_AutoApply Or m_ShowTodayButton, udtItemsActionButton(0).RECT.Height + PaddingY, 0) + IIF(m_CallOutPosition = [Position Bottom] And Not m_IsChild, coHeight, 0)) * Screen.TwipsPerPixelX
         '---
         .Size c_Width, c_Height
@@ -4125,7 +4197,8 @@ Private Sub ResetControl()
         Next
     End If
     '-AutoApply
-    If Not m_AutoApply Or m_ShowTodayButton Then
+    'If Not m_AutoApply Or m_ShowTodayButton Then
+    If Not m_AutoApply Then
         For i = 0 To UBound(udtItemsActionButton)
             udtItemsActionButton(i).MouseState = Normal
         Next
@@ -4147,6 +4220,7 @@ Private Sub Draw()
     Dim BorderColor     As OLE_COLOR
     Dim ArrowColor      As OLE_COLOR
     Dim IsLock          As Boolean
+    Dim bShowAction     As Boolean
     '--
     Dim dDate           As Date
     Dim FirtsDay        As Integer
@@ -4281,7 +4355,8 @@ Private Sub Draw()
                     IsLock = .DateValue < m_MinDate Or .DateValue > m_MaxDate
                     .IsDayInMonthCurrent = Month(dDate) = .DatePartMonth
                     .IsNow = curDate = Date
-                    .IsValueDate = curDate = d_ValueTemp
+                    '.IsValueDate = curDate = d_ValueTemp
+                    .IsValueDate = curDate = m_Value
                     If IsDate(m_ValueStart) Then .IsStartDate = curDate = m_ValueStart
                     If Not IsDate(m_ValueStart) Then .IsStartDate = False
                     If IsDate(m_ValueEnd) Then .IsEndDate = curDate = m_ValueEnd
@@ -4496,21 +4571,32 @@ Private Sub Draw()
         '--
         For i = 0 To UBound(udtItemsRangeButton)
             With udtItemsRangeButton(i)
-                If .MouseState = Normal Then BackColor = m_ButtonsBackColor
-                If .MouseState = Hot Then BackColor = ShiftColor(vbBlack, m_ButtonsBackColor, 20)
-                If .MouseState = Pressed Then BackColor = ShiftColor(vbBlack, m_ButtonsBackColor, 50)
-                '--
-                SetRect lRect, .RECT.Left, .RECT.Top, .RECT.Width, .RECT.Height
-                DrawRoundRect hGraphics, lRect, Corners, BackColor, m_ButtonsBorderWidth, m_ButtonsBorderColor
-                If m_UseGDIPString Then GdiPlusDrawString hGraphics, .Caption, .RECT.Left, .RECT.Top, .RECT.Width, .RECT.Height, m_ButtonsFont, m_ButtonsForeColor, StringAlignmentCenter, StringAlignmentCenter
-                If Not m_UseGDIPString Then DrawText hdc, .Caption, .RECT2.Left, .RECT2.Top, .RECT2.Right, .RECT2.Bottom, m_ButtonsFont, m_ButtonsForeColor, StringAlignmentCenter, StringAlignmentCenter
+                If .IsVisible Then
+                    If .MouseState = Normal Then BackColor = m_ButtonsBackColor
+                    If .MouseState = Hot Then BackColor = ShiftColor(vbBlack, m_ButtonsBackColor, 20)
+                    If .MouseState = Pressed Then BackColor = ShiftColor(vbBlack, m_ButtonsBackColor, 50)
+                    '--
+                    SetRect lRect, .RECT.Left, .RECT.Top, .RECT.Width, .RECT.Height
+                    DrawRoundRect hGraphics, lRect, Corners, BackColor, m_ButtonsBorderWidth, m_ButtonsBorderColor
+                    If m_UseGDIPString Then GdiPlusDrawString hGraphics, .Caption, .RECT.Left, .RECT.Top, .RECT.Width, .RECT.Height, m_ButtonsFont, m_ButtonsForeColor, StringAlignmentCenter, StringAlignmentCenter
+                    If Not m_UseGDIPString Then DrawText hdc, .Caption, .RECT2.Left, .RECT2.Top, .RECT2.Right, .RECT2.Bottom, m_ButtonsFont, m_ButtonsForeColor, StringAlignmentCenter, StringAlignmentCenter
+                End If
             End With
         Next
     End If
 
     '-> Pintar Botones de accion.
-    If Not m_AutoApply Or m_ShowTodayButton Then
-        countItem = UBound(udtItemsActionButton) - IIF(m_ShowTodayButton, 2, IIF(IsChild, 1, 0))
+    If Not m_AutoApply Then
+        bShowAction = True: countItem = UBound(udtItemsActionButton)
+    Else
+        If m_ShowTodayButton Then
+            bShowAction = True: countItem = UBound(udtItemsActionButton) - 2
+        Else
+            bShowAction = False
+        End If
+    End If
+    '---
+    If bShowAction Then
         With Corners
             .TopLeft = m_ButtonsCornerRadius: .TopRight = m_ButtonsCornerRadius
             .BottomLeft = m_ButtonsCornerRadius: .BottomRight = m_ButtonsCornerRadius
@@ -4726,21 +4812,41 @@ Private Function ApplyChangeValues() As Boolean
     ApplyChangeValues = False
     'Aplicar el Value
     If Not m_UseRangeValue Then
-        If IsDate(d_ValueTemp) Then m_Value = d_ValueTemp
-        RaiseEvent ChangeDate(m_Value)
+        'If IsDate(d_ValueTemp) Then m_Value = d_ValueTemp
+        If Len(Trim(m_Value)) > 0 Then
+            If IsDate(CDate(m_Value)) Then
+                d_ValueTemp = m_Value
+                RaiseEvent ChangeDate(m_Value)
+            End If
+        End If
         ApplyChangeValues = True
     End If
     'Aplicar StartValue y EndValue
     If m_UseRangeValue Then
-        If IsDate(CDate(m_ValueStart)) Then
-            'm_ValueStart = d_ValueStartTemp
-            RaiseEvent ChangeStartDate(m_ValueStart)
+        If Len(Trim(m_ValueStart)) > 0 Then
+            If IsDate(CDate(m_ValueStart)) Then
+                d_ValueTempStart = m_ValueStart
+                RaiseEvent ChangeStartDate(m_ValueStart)
+            End If
+        Else
+            If m_IsChild Then
+                d_ValueTempStart = m_ValueStart
+                RaiseEvent ChangeStartDate(m_ValueStart)
+            End If
         End If
         
-        If IsDate(CDate(m_ValueEnd)) Then
-            'm_ValueEnd = d_ValueEndTemp
-            RaiseEvent ChangeEndDate(m_ValueEnd)
-            ApplyChangeValues = True
+        If Len(Trim(m_ValueEnd)) > 0 Then
+            If IsDate(CDate(m_ValueEnd)) Then
+                d_ValueTempEnd = m_ValueEnd
+                RaiseEvent ChangeEndDate(m_ValueEnd)
+                ApplyChangeValues = True
+            End If
+        ElseIf Len(Trim(m_ValueEnd)) = 0 Then
+            If m_IsChild And Len(Trim(m_ValueEnd)) > 0 Then
+                d_ValueTempEnd = m_ValueEnd
+                RaiseEvent ChangeEndDate(m_ValueEnd)
+                ApplyChangeValues = True
+            End If
         Else
             ApplyChangeValues = False
         End If

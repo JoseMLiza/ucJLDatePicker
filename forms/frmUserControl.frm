@@ -2,7 +2,7 @@ VERSION 5.00
 Begin VB.Form frmUserControl 
    BorderStyle     =   4  'Fixed ToolWindow
    Caption         =   "ucJLPicker"
-   ClientHeight    =   4260
+   ClientHeight    =   4515
    ClientLeft      =   45
    ClientTop       =   390
    ClientWidth     =   9105
@@ -11,16 +11,25 @@ Begin VB.Form frmUserControl
    LockControls    =   -1  'True
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   ScaleHeight     =   4260
+   ScaleHeight     =   4515
    ScaleWidth      =   9105
    ShowInTaskbar   =   0   'False
    StartUpPosition =   2  'CenterScreen
+   Begin VB.CheckBox chkProperties 
+      Caption         =   "ShowTodayButton"
+      Height          =   255
+      Index           =   6
+      Left            =   135
+      TabIndex        =   20
+      Top             =   3510
+      Width           =   1815
+   End
    Begin VB.TextBox Text1 
       Height          =   330
       Left            =   135
       TabIndex        =   19
       Text            =   "00/00/0000"
-      Top             =   3870
+      Top             =   4110
       Visible         =   0   'False
       Width           =   975
    End
@@ -29,17 +38,17 @@ Begin VB.Form frmUserControl
       Height          =   330
       Left            =   1095
       TabIndex        =   18
-      Top             =   3870
+      Top             =   4110
       Visible         =   0   'False
       Width           =   975
    End
    Begin VB.CheckBox chkProperties 
       Caption         =   "UseGDIPString"
       Height          =   255
-      Index           =   6
+      Index           =   7
       Left            =   135
       TabIndex        =   13
-      Top             =   3510
+      Top             =   3765
       Width           =   1815
    End
    Begin Proyecto1.ucJLDTPicker ucJLDTPicker 
@@ -481,7 +490,10 @@ Private Sub chkProperties_Click(Index As Integer)
                 .RightToLeft = chkProperties(Index).Value
             Case 5 'AutoApply
                 .AutoApply = chkProperties(Index).Value
-            Case 6 'UseGDIPString
+                chkProperties(Index + 1).Value = Abs(.ShowTodayButton)
+            Case 6 'ShowTodayButton
+                .ShowTodayButton = chkProperties(Index).Value
+            Case 7 'UseGDIPString
                 .UseGDIPString = chkProperties(Index).Value
         End Select
     End With
@@ -493,10 +505,11 @@ End Sub
 
 Private Sub Command1_Click()
     If IsDate(Text1) Then
-        'Para agregar reservas
+        'Para agregar reservas: Descomentar para probar
         'ucJLDTPicker.SetDaysRaservedAndFree CDate(Text1), TypeDayReserved
-        'Para agregar días Feriados
-        ucJLDTPicker.SetDaysRaservedAndHoliday CDate(Text1), TypeDayFree
+        
+        'Para agregar días Feriados: Descomentar para probar
+        'ucJLDTPicker.SetDaysRaservedAndHoliday CDate(Text1), TypeDayFree
     End If
 End Sub
 
@@ -517,6 +530,19 @@ Private Sub Form_Load()
     '---
     ucTxtProperties(0).Text = ucJLDTPicker.ColsPicker
     ucTxtProperties(1).Text = ucJLDTPicker.NumberPickers
+    
+    'Cambiar texto en Action Buttons [Today, Cancel, Apply]: Descomentar para probar
+    'Call ucJLDTPicker1.SetActionButtons(0, "Hoy", [Action Today])
+    'Call ucJLDTPicker1.SetActionButtons(1, "Cancelar", [Action Cancel])
+    'Call ucJLDTPicker1.SetActionButtons(2, "Aplicar", [Action Apply])
+    
+    'Cambiar Range Buttons: Descomentar para probar
+    'Call ucJLDTPicker.SetRangeButtons(0, "Button 0", False)
+    'Call ucJLDTPicker.SetRangeButtons(1, "Button 1")
+    'Call ucJLDTPicker.SetRangeButtons(2, "Button 2", False)
+    'Call ucJLDTPicker.SetRangeButtons(3, "Button 3")
+    'Call ucJLDTPicker.SetRangeButtons(4, "Button 4", False)
+    'Call ucJLDTPicker.SetRangeButtons(5, "Button 5")
 End Sub
 
 Private Sub ucJLDTPicker_ButtonActionClick(ByVal Index As Variant, Caption As String)
@@ -555,7 +581,7 @@ End Sub
 
 Private Sub ucJLDTPicker_Resize()
     Me.Width = ucJLDTPicker.Left + ucJLDTPicker.Width + 420
-    Me.Height = ucJLDTPicker.Top + ucJLDTPicker.Height + 735
+    'Me.Height = ucJLDTPicker.Top + ucJLDTPicker.Height + 735
 End Sub
 
 Private Sub ucJLDTPicker1_ChangeDate(ByVal Value As Date)
