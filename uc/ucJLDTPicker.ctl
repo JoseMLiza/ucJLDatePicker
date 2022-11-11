@@ -4831,7 +4831,7 @@ Private Function ApplyChangeValues() As Boolean
         Else
             If m_IsChild Then
                 d_ValueTempStart = m_ValueStart
-                RaiseEvent ChangeStartDate(m_ValueStart)
+                If IsDate(m_ValueStart) Then RaiseEvent ChangeStartDate(m_ValueStart)
             End If
         End If
         
@@ -4844,7 +4844,7 @@ Private Function ApplyChangeValues() As Boolean
         ElseIf Len(Trim(m_ValueEnd)) = 0 Then
             If m_IsChild And Len(Trim(m_ValueEnd)) > 0 Then
                 d_ValueTempEnd = m_ValueEnd
-                RaiseEvent ChangeEndDate(m_ValueEnd)
+                If IsDate(m_ValueEnd) Then RaiseEvent ChangeEndDate(m_ValueEnd)
                 ApplyChangeValues = True
             End If
         Else
