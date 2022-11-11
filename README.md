@@ -24,6 +24,8 @@ In the project, a control called ucText created by Leandro Ascierto has been use
   - Updated a bug in the use of FirstDayOfWeek.
 
 **10/11/2022:**
+
+  **First part**
   - Changed properties:
     - DayFreeForeColor To **DayHolidayForeColor**
 
@@ -40,3 +42,13 @@ In the project, a control called ucText created by Leandro Ascierto has been use
 
   - New behavior:
     - Added the possibility of expanding an already selected range, you just have to right click on the end date and you can expand to the new date you need.
+
+  **Second part**
+  - **Errors found:**
+    - Fixed bug in action button displays.
+  
+  - Changed name procedure:
+    - SetRangeButtonsCaption To **SetRangeButtons**: The change is because the possibility of making the buttons visible or not was added, for this reason an optional **VISIBLE** parameter was added, which by default has the value **TRUE**
+  
+  - New behavior:
+    - Range buttons will now close the control when their property **IsChild = False** and **AutoApply = True**
