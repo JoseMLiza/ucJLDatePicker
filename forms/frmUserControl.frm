@@ -553,6 +553,10 @@ Private Sub ucJLDTPicker_ButtonRangeClick(ByVal Index As Variant, Caption As Str
     MsgBox "Button Index(" & Index & "): " & Caption
 End Sub
 
+Private Sub ucJLDTPicker_ChangeDate(ByVal Value As Date)
+    Debug.Print "Value = " & Value
+End Sub
+
 Private Sub ucJLDTPicker_ChangeEndDate(ByVal Value As String)
     Debug.Print "ValueEnd = " & Value
     Debug.Print "Selection days = " & ucJLDTPicker.DaySelCount

@@ -3105,24 +3105,25 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                         .MonthName = MonthName(Month(d_ValueTemp))
                                         If m_UseRangeValue Then
                                             .DateInPicker = DateSerial(.NumberYear, .NumberMonth, 1)
-                                            m_ValueStart = d_ValueTemp: RaiseEvent ChangeStartDate(d_ValueTemp)
-                                            m_ValueEnd = d_ValueTemp: RaiseEvent ChangeEndDate(d_ValueTemp)
+                                            m_ValueStart = d_ValueTemp
+                                            m_ValueEnd = d_ValueTemp
                                         Else
                                             .DateInPicker = d_ValueTemp
-                                            RaiseEvent ChangeDate(d_ValueTemp)
                                         End If
+                                        If m_AutoApply Then ApplyChangeValues
                                     End With
                                     Call UpdateLinkedCalendar(0)
                                 Case [Action Cancel]
                                     If m_UseRangeValue Then
                                         If m_ValueStart = d_ValueTempStart And m_ValueEnd = d_ValueTempEnd Then
-                                            m_ValueStart = ""
-                                            m_ValueEnd = ""
+                                            m_ValueStart = "": d_ValueTempStart = ""
+                                            m_ValueEnd = "": d_ValueTempEnd = ""
                                         Else
                                             m_ValueStart = d_ValueTempStart
                                             m_ValueEnd = d_ValueTempEnd
                                         End If
                                         ApplyChangeValues
+                                        c_IndexSelMove = -1
                                     Else
                                         m_Value = d_ValueTemp
                                     End If
