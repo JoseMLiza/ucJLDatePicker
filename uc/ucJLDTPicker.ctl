@@ -3109,6 +3109,7 @@ Private Sub UserControl_MouseUp(Button As Integer, Shift As Integer, X As Single
                                             m_ValueEnd = d_ValueTemp
                                         Else
                                             .DateInPicker = d_ValueTemp
+                                            m_Value = d_ValueTemp
                                         End If
                                         If m_AutoApply Then ApplyChangeValues
                                     End With
