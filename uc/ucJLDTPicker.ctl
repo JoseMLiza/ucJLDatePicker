@@ -679,6 +679,7 @@ Private m_CornerBottomLeft              As Integer
 Private m_CornerBottomRight             As Integer
 Private m_PaddingX                      As Integer
 Private m_PaddingY                      As Integer
+Private m_ParentToNotify                As Long
 Private m_Redraw                        As Boolean
 Private m_Shadow                        As Boolean
 Private m_ShadowSize                    As Integer
@@ -967,6 +968,11 @@ Public Property Let PaddingY(ByVal Value As Integer)
     InitControl
     PropertyChanged "PaddingY"
     If m_IsChild Then InitControl: Draw: Refresh
+End Property
+
+'m_ParentToNotify                As Long
+Public Property Let ParentToNotify(hWndParent As Long)
+    m_ParentToNotify = hWndParent
 End Property
 
 'm_Redraw                        As Boolean
